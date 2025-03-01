@@ -18,6 +18,7 @@ const TripPlanner = () => {
   // Trip details state
   const [tripDetails, setTripDetails] = useState({
     destination: "",
+    city: "", // Added city field to store just the city part
     startDate: new Date(),
     endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     duration: 7,
@@ -54,7 +55,13 @@ const TripPlanner = () => {
   };
 
   const handleLocationSelect = (location: string) => {
-    setTripDetails({ ...tripDetails, destination: location });
+    // Extract the city from the location (e.g., "Paris, France" -> "Paris")
+    const city = location.split(',')[0].trim();
+    setTripDetails({ 
+      ...tripDetails, 
+      destination: location,
+      city: city
+    });
   };
 
   const handleDatesChange = (startDate: Date, endDate: Date, duration: number) => {
