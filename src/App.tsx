@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Index from "./pages/Index";
 import TripPlanner from "./pages/TripPlanner";
@@ -18,6 +18,23 @@ const queryClient = new QueryClient();
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Check authentication status whenever localStorage changes
+  useEffect(() => {
+    const checkAuth = () => {
+      const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+      setIsLoggedIn(loggedIn);
+    };
+
+    // Initial check
+    checkAuth();
+    
+    // Listen for storage events (in case another tab changes auth state)
+    window.addEventListener("storage", checkAuth);
+    
+    // Cleanup
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
 
   // Initialize theme on app load
   useEffect(() => {
@@ -52,27 +69,27 @@ const App = () => {
           <Routes>
             <Route path="/login" element={
               <AnimatedTransition>
-                {isLoggedIn ? <Navigate to="/" /> : <Login />}
+                {isLoggedIn ? <Navigate to="/" replace /> : <Login />}
               </AnimatedTransition>
             } />
             <Route path="/" element={
               <AnimatedTransition>
-                {!isLoggedIn ? <Navigate to="/login" /> : <Index />}
+                {!isLoggedIn ? <Navigate to="/login" replace /> : <Index />}
               </AnimatedTransition>
             } />
             <Route path="/plan" element={
               <AnimatedTransition>
-                {!isLoggedIn ? <Navigate to="/login" /> : <TripPlanner />}
+                {!isLoggedIn ? <Navigate to="/login" replace /> : <TripPlanner />}
               </AnimatedTransition>
             } />
             <Route path="/itinerary" element={
               <AnimatedTransition>
-                {!isLoggedIn ? <Navigate to="/login" /> : <Itinerary />}
+                {!isLoggedIn ? <Navigate to="/login" replace /> : <Itinerary />}
               </AnimatedTransition>
             } />
             <Route path="/gumloop-test" element={
               <AnimatedTransition>
-                {!isLoggedIn ? <Navigate to="/login" /> : (
+                {!isLoggedIn ? <Navigate to="/login" replace /> : (
                   <div className="container mx-auto px-4 pt-32 pb-20">
                     <h1 className="text-3xl font-bold mb-8 text-center">Gumloop API Integration Test</h1>
                     <div className="max-w-md mx-auto">

@@ -21,19 +21,20 @@ const Login = () => {
     // Simulate login process
     setTimeout(() => {
       setIsLoading(false);
-      // Any username and password will work for now
+      // Set login state
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("username", username);
       toast.success("Successfully logged in!");
-      navigate("/");
+      // Force navigate to home page
+      navigate("/", { replace: true });
     }, 1000);
   };
 
   const handleSkip = () => {
     // Set login state to true even when skipping
     localStorage.setItem("isLoggedIn", "true");
-    // Navigate to home page
-    navigate("/");
+    // Force navigate to home page with replace to prevent back navigation to login
+    navigate("/", { replace: true });
   };
 
   return (
