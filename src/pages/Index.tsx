@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
-import { ArrowRight, Globe, Map, Calendar, CreditCard, Compass, Sparkles } from "lucide-react";
+import { ArrowRight, Globe, Map, Calendar, CreditCard, Compass, Sparkles, Loader2 } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -17,7 +17,6 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
   const [pollingInterval, setPollingInterval] = useState<number | null>(null);
 
-  // Animation for the features section
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -40,7 +39,6 @@ const Index = () => {
     };
   }, []);
 
-  // Clear polling interval when component unmounts
   useEffect(() => {
     return () => {
       if (pollingInterval) {
@@ -49,17 +47,14 @@ const Index = () => {
     };
   }, [pollingInterval]);
 
-  // Initial Gumloop API call
   useEffect(() => {
     const startPipeline = async () => {
       setIsLoading(true);
       try {
-        // API constants
         const apiKey = "4997b5ac80a9402d977502ac41891eec";
         const userId = "1y5cS7wht6QDSjLHGBJOi6vu19y1";
         const savedItemId = "mqWGGXyZuhFwLQt5YDpyZC";
         
-        // Start the pipeline
         const pipelineResponse = await startGumloopPipeline(
           userId,
           savedItemId,
@@ -70,7 +65,6 @@ const Index = () => {
         setGumloopRunId(pipelineResponse.run_id);
         setGumloopResponse(pipelineResponse);
         
-        // Start polling for the result
         const intervalId = window.setInterval(async () => {
           if (pipelineResponse.run_id) {
             try {
@@ -83,7 +77,6 @@ const Index = () => {
               setRunStatus(runData.state);
               setRunLogs(runData.log || []);
               
-              // If pipeline is done or failed, stop polling and update response
               if (runData.state === "DONE" || runData.state === "FAILED" || runData.state === "TERMINATED") {
                 clearInterval(intervalId);
                 setPollingInterval(null);
@@ -98,7 +91,7 @@ const Index = () => {
               setIsLoading(false);
             }
           }
-        }, 3000); // Poll every 3 seconds
+        }, 3000);
         
         setPollingInterval(intervalId);
       } catch (err: any) {
@@ -115,7 +108,6 @@ const Index = () => {
     navigate("/plan");
   };
 
-  // Destinations data
   const popularDestinations = [
     {
       name: "Paris",
@@ -143,7 +135,6 @@ const Index = () => {
     <div className="min-h-screen">
       <Navbar />
 
-      {/* Hero Section */}
       <section className="relative min-h-screen flex items-center">
         <div className="absolute inset-0 bg-gradient-radial from-blue-50 to-transparent opacity-70 z-0"></div>
         <div className="absolute inset-0 bg-noise opacity-10 z-0"></div>
@@ -159,7 +150,6 @@ const Index = () => {
               <span className="text-primary">Perfect Journeys</span>
             </h1>
             
-            {/* Gumloop API Response Display */}
             <div className="w-full max-w-lg mx-auto mb-8 p-4 border border-border rounded-lg bg-background/80 backdrop-blur-sm">
               <h3 className="text-lg font-semibold mb-2">Gumloop API Test Result:</h3>
               {isLoading ? (
@@ -204,6 +194,17 @@ const Index = () => {
               )}
             </div>
             
+            {isLoading && (
+              <div className="w-full max-w-lg mx-auto mb-8 flex flex-col items-center p-4 bg-primary/5 rounded-lg animate-pulse">
+                <Loader2 className="h-10 w-10 text-primary animate-spin mb-3" />
+                <p className="text-primary font-medium">Processing your travel data...</p>
+                <p className="text-sm text-muted-foreground mt-1">This might take a moment</p>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
+                  <div className="bg-primary h-2.5 rounded-full animate-progress" style={{width: '70%'}}></div>
+                </div>
+              </div>
+            )}
+            
             <p className="text-xl text-muted-foreground mb-10 max-w-2xl animate-fade-in" style={{ animationDelay: "0.6s" }}>
               Discover, plan, and experience your dream vacation with a smart travel buddy that helps you create personalized itineraries based on your preferences and budget.
             </p>
@@ -223,7 +224,6 @@ const Index = () => {
               </a>
             </div>
             
-            {/* Animated 3D Globe or World Map Placeholder */}
             <div className="relative w-full max-w-3xl mx-auto">
               <div className="aspect-video rounded-2xl overflow-hidden shadow-xl animate-float">
                 <div className="absolute inset-0 bg-gradient-to-b from-primary/30 to-transparent opacity-60 z-10"></div>
@@ -241,7 +241,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Popular Destinations */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -286,7 +285,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features */}
       <section 
         id="about" 
         ref={featuresRef} 
@@ -360,7 +358,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Call to Action */}
       <section className="py-20 bg-primary relative overflow-hidden">
         <div className="absolute inset-0 bg-noise opacity-10"></div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -381,7 +378,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-white border-t border-border py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
