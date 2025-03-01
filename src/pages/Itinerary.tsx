@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -47,7 +46,6 @@ const Itinerary = () => {
     if (location.state?.tripDetails) {
       setTripDetails(location.state.tripDetails);
       
-      // Simulate itinerary data loading and fetch sights
       fetchDataFromGumloop(location.state?.tripDetails?.destination);
     } else {
       navigate("/plan");
@@ -72,14 +70,12 @@ const Itinerary = () => {
     }
   };
 
-  // Format time as mm:ss
   const formatElapsedTime = () => {
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = elapsedTime % 60;
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Fetch data from Gumloop API
   const fetchDataFromGumloop = async (destination: string) => {
     if (!destination) return;
     
@@ -88,11 +84,9 @@ const Itinerary = () => {
     
     try {
       const city = destination.split(',')[0];
-      // Format dates for the API
       const formattedStartDate = tripDetails ? format(tripDetails.startDate, "MMMM do") : "";
       const formattedEndDate = tripDetails ? format(tripDetails.endDate, "MMMM do") : "";
       
-      // Create pipeline inputs
       const pipelineInputs = [
         { input_name: "destination", value: city },
         { input_name: "budget", value: tripDetails ? tripDetails.budget.toString() : "1000" },
@@ -101,7 +95,6 @@ const Itinerary = () => {
         { input_name: "end_date", value: formattedEndDate }
       ];
       
-      // Start the pipeline
       const response = await startGumloopPipeline(
         GUMLOOP_USER_ID,
         GUMLOOP_SAVED_ITEM_ID,
@@ -111,7 +104,6 @@ const Itinerary = () => {
       
       setRunId(response.run_id);
       
-      // Poll for results
       if (response.run_id) {
         pollRunStatus(response.run_id);
       }
@@ -123,8 +115,7 @@ const Itinerary = () => {
       stopTimer();
     }
   };
-  
-  // Poll run status
+
   const pollRunStatus = async (runId: string) => {
     try {
       const statusResponse = await getPipelineRunStatus(
@@ -135,15 +126,12 @@ const Itinerary = () => {
       
       setRunStatus(statusResponse.state);
       
-      // Extract logs
       if (statusResponse.log && statusResponse.log.length > 0) {
         setRunLogs(statusResponse.log);
       }
       
-      // If completed, extract data from output
       if (statusResponse.state === "DONE") {
         if (statusResponse.outputs) {
-          // Extract all available data from outputs
           if (statusResponse.outputs.sights) {
             setSights(statusResponse.outputs.sights);
           }
@@ -166,7 +154,6 @@ const Itinerary = () => {
         setIsApiLoading(false);
         stopTimer();
       } else {
-        // Continue polling
         setTimeout(() => pollRunStatus(runId), 3000);
       }
     } catch (error) {
@@ -178,7 +165,6 @@ const Itinerary = () => {
     }
   };
 
-  // Mock itinerary data with real sights integrated
   const generateMockItinerary = () => {
     if (!tripDetails) return [];
     
@@ -192,7 +178,6 @@ const Itinerary = () => {
       "https://images.unsplash.com/photo-1507369632363-a0b8cfbfb290?auto=format&fit=crop&w=800&q=80"
     ];
     
-    // Use the real sights from Gumloop API if available, otherwise use fallback activities
     const activities = sights.length > 0 
       ? sights 
       : [
@@ -207,14 +192,13 @@ const Itinerary = () => {
     
     for (let i = 1; i <= tripDetails.duration; i++) {
       const dayActivities = [];
-      const numActivities = Math.floor(Math.random() * 3) + 2; // 2-4 activities per day
+      const numActivities = Math.floor(Math.random() * 3) + 2;
       
       for (let j = 0; j < numActivities; j++) {
-        // Use an activity from our list, cycling through them
         const activityIndex = (i + j) % activities.length;
         const randomActivity = activities[activityIndex];
         const randomImage = images[Math.floor(Math.random() * images.length)];
-        const startHour = 8 + j * 3; // Space activities throughout the day
+        const startHour = 8 + j * 3;
         
         dayActivities.push({
           title: randomActivity,
@@ -235,7 +219,7 @@ const Itinerary = () => {
     
     return itinerary;
   };
-  
+
   const mockItinerary = generateMockItinerary();
 
   const handleBack = () => {
@@ -414,7 +398,6 @@ const Itinerary = () => {
                   )}
                 </div>
                 
-                {/* Flights Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
                     <Plane className="mr-2 h-5 w-5 text-primary" />
@@ -453,7 +436,6 @@ const Itinerary = () => {
                   )}
                 </div>
                 
-                {/* Accommodations Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
                     <Hotel className="mr-2 h-5 w-5 text-primary" />
@@ -492,7 +474,6 @@ const Itinerary = () => {
                   )}
                 </div>
                 
-                {/* Activities Section */}
                 <div className="mb-6">
                   <div className="flex items-center mb-4">
                     <Landmark className="mr-2 h-5 w-5 text-primary" />
