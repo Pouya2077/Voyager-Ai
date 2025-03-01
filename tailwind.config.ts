@@ -142,7 +142,8 @@ export default {
 			},
 			fontFamily: {
 				sans: ['SF Pro Display', 'Inter', 'system-ui', 'sans-serif'],
-				mono: ['SF Mono', 'monospace']
+				mono: ['SF Mono', 'monospace'],
+				playfair: ['Playfair Display', 'serif']
 			},
 			backdropBlur: {
 				'xs': '2px',

@@ -21,6 +21,7 @@ const GlassMorphCard = ({
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl border border-white/20 bg-white/80 p-6 shadow-sm backdrop-blur-lg transition-all",
+        "dark:bg-black/40 dark:border-white/10 dark:shadow-md",
         hoverEffect && "hover:shadow-md hover:translate-y-[-2px]",
         className
       )}

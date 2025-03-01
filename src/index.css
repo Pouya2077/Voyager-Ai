@@ -1,5 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -93,20 +94,24 @@
     @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-sm;
   }
   
+  .dark .glassmorphism {
+    @apply bg-black/40 backdrop-blur-lg border border-white/10 shadow-md;
+  }
+  
   .h1 {
-    @apply text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl;
+    @apply text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl font-playfair;
   }
   
   .h2 {
-    @apply text-3xl font-bold tracking-tight sm:text-4xl;
+    @apply text-3xl font-bold tracking-tight sm:text-4xl font-playfair;
   }
   
   .h3 {
-    @apply text-2xl font-bold tracking-tight sm:text-3xl;
+    @apply text-2xl font-bold tracking-tight sm:text-3xl font-playfair;
   }
   
   .h4 {
-    @apply text-xl font-bold tracking-tight sm:text-2xl;
+    @apply text-xl font-bold tracking-tight sm:text-2xl font-playfair;
   }
 
   .story-link {
@@ -120,19 +125,22 @@
   .btn-primary {
     @apply rounded-full px-8 py-3 font-medium transition-all duration-300 ease-out 
            text-primary-foreground bg-primary hover:bg-primary/90
-           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+           dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90;
   }
 
   .btn-secondary {
     @apply rounded-full px-8 py-3 font-medium transition-all duration-300 ease-out 
            text-foreground bg-secondary hover:bg-secondary/80
-           focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2;
+           focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2
+           dark:bg-secondary dark:text-secondary-foreground;
   }
 
   .btn-ghost {
     @apply rounded-full px-8 py-3 font-medium transition-all duration-300 ease-out
            text-foreground hover:bg-secondary/50
-           focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2;
+           focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2
+           dark:text-foreground dark:hover:bg-secondary/30;
   }
 }
 
@@ -148,16 +156,15 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  @apply bg-transparent dark:bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 100px;
+  @apply bg-black/10 dark:bg-white/10 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  @apply bg-black/20 dark:bg-white/20;
 }
 
 /* Page transitions */
@@ -181,4 +188,21 @@ html {
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 300ms, transform 300ms;
+}
+
+/* Dark mode toggle animation */
+.theme-toggle-sun {
+  @apply transition-transform duration-300;
+}
+
+.dark .theme-toggle-sun {
+  @apply scale-0;
+}
+
+.theme-toggle-moon {
+  @apply absolute transition-transform duration-300 scale-0;
+}
+
+.dark .theme-toggle-moon {
+  @apply scale-100;
 }

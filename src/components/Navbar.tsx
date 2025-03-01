@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,7 +36,7 @@ const Navbar = () => {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "py-3 bg-white/80 backdrop-blur-lg shadow-sm"
+          ? "py-3 bg-white/80 backdrop-blur-lg shadow-sm dark:bg-black/50 dark:backdrop-blur-lg dark:shadow-md"
           : "py-5 bg-transparent"
       }`}
     >
@@ -48,7 +49,7 @@ const Navbar = () => {
             <span className="rounded-md bg-primary p-1">
               <span className="block h-6 w-6 rounded-sm bg-white"></span>
             </span>
-            <span className="font-semibold text-xl">Voyager</span>
+            <span className="font-semibold font-playfair text-xl">Voyager</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -70,25 +71,29 @@ const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
+            <ThemeToggle />
             <Link to="/plan" className="btn-primary">
               Plan Your Trip
             </Link>
           </div>
 
           {/* Mobile menu button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden rounded-md p-2 text-foreground hover:bg-muted"
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="md:hidden flex items-center space-x-4">
+            <ThemeToggle />
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="rounded-md p-2 text-foreground hover:bg-muted"
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="md:hidden h-screen bg-background animate-slide-in-right fixed top-0 right-0 w-4/5 z-50 shadow-2xl">
+        <div className="md:hidden h-screen bg-background dark:bg-background animate-slide-in-right fixed top-0 right-0 w-4/5 z-50 shadow-2xl">
           <div className="flex items-center justify-between p-4 border-b">
             <Link
               to="/"
@@ -97,7 +102,7 @@ const Navbar = () => {
               <span className="rounded-md bg-primary p-1">
                 <span className="block h-6 w-6 rounded-sm bg-white"></span>
               </span>
-              <span className="font-semibold text-xl">Voyager</span>
+              <span className="font-semibold font-playfair text-xl">Voyager</span>
             </Link>
             <button
               onClick={() => setIsMenuOpen(false)}
@@ -136,7 +141,7 @@ const Navbar = () => {
       {/* Overlay for mobile menu */}
       {isMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+          className="md:hidden fixed inset-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-40"
           onClick={() => setIsMenuOpen(false)}
         ></div>
       )}
