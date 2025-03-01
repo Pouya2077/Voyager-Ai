@@ -9,6 +9,9 @@ const Index = () => {
   const navigate = useNavigate();
   const featuresRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [gumloopResponse, setGumloopResponse] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Animation for the features section
   useEffect(() => {
@@ -31,6 +34,36 @@ const Index = () => {
         observer.unobserve(featuresRef.current);
       }
     };
+  }, []);
+
+  // Gumloop API call
+  useEffect(() => {
+    setIsLoading(true);
+    
+    const options = {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer 4997b5ac80a9402d977502ac41891eec',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "user_id": "1y5cS7wht6QDSjLHGBJOi6vu19y1",
+        "saved_item_id": "mqWGGXyZuhFwLQt5YDpyZC",
+        "pipeline_inputs": [{"input_name":"city","value":"Paris"}]
+      })
+    };
+
+    fetch('https://api.gumloop.com/api/v1/start_pipeline', options)
+      .then(response => response.json())
+      .then(data => {
+        setGumloopResponse(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setError(err.message || "An error occurred");
+        setIsLoading(false);
+      });
   }, []);
 
   const handleGetStarted = () => {
@@ -80,6 +113,22 @@ const Index = () => {
               Your Personal AI Travel Companion for{" "}
               <span className="text-primary">Perfect Journeys</span>
             </h1>
+            
+            {/* Gumloop API Response Display */}
+            <div className="w-full max-w-lg mx-auto mb-8 p-4 border border-border rounded-lg bg-background/80 backdrop-blur-sm">
+              <h3 className="text-lg font-semibold mb-2">Gumloop API Test Result:</h3>
+              {isLoading ? (
+                <p className="text-muted-foreground">Loading data from Gumloop...</p>
+              ) : error ? (
+                <div className="text-red-500">
+                  <p>Error: {error}</p>
+                </div>
+              ) : (
+                <pre className="text-xs text-left p-3 bg-black/5 dark:bg-white/5 rounded-md overflow-auto max-h-60">
+                  {JSON.stringify(gumloopResponse, null, 2)}
+                </pre>
+              )}
+            </div>
             
             <p className="text-xl text-muted-foreground mb-10 max-w-2xl animate-fade-in" style={{ animationDelay: "0.6s" }}>
               Discover, plan, and experience your dream vacation with a smart travel buddy that helps you create personalized itineraries based on your preferences and budget.
