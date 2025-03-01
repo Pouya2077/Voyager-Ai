@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -7,7 +6,7 @@ import TripDurationPicker from "@/components/TripDurationPicker";
 import BudgetSlider from "@/components/BudgetSlider";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Plane, Calendar, Wallet, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plane, Calendar, Wallet, Sparkles, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const TripPlanner = () => {
@@ -15,10 +14,9 @@ const TripPlanner = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  // Trip details state
   const [tripDetails, setTripDetails] = useState({
     destination: "",
-    city: "", // Added city field to store just the city part
+    city: "",
     startDate: new Date(),
     endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     duration: 7,
@@ -49,7 +47,6 @@ const TripPlanner = () => {
   };
 
   const handleLocationSelect = (location: string) => {
-    // Extract the city from the location (e.g., "Paris, France" -> "Paris")
     const city = location.split(',')[0].trim();
     setTripDetails({ 
       ...tripDetails, 
@@ -78,7 +75,6 @@ const TripPlanner = () => {
   const handleGenerateItinerary = () => {
     setLoading(true);
     
-    // Simulate API call to generate itinerary
     setTimeout(() => {
       setLoading(false);
       navigate("/itinerary", { state: { tripDetails } });
@@ -91,7 +87,6 @@ const TripPlanner = () => {
       
       <div className="container mx-auto px-4 pt-32 pb-20 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
-          {/* Progress Steps */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
               {[1, 2, 3].map((step) => (
@@ -140,7 +135,6 @@ const TripPlanner = () => {
             </div>
           </div>
 
-          {/* Step Content */}
           <GlassMorphCard className="mb-8">
             {currentStep === 1 && (
               <div className="animate-fade-in">
@@ -233,7 +227,6 @@ const TripPlanner = () => {
             )}
           </GlassMorphCard>
 
-          {/* Navigation Buttons */}
           <div className="flex justify-between">
             <Button
               variant="outline"
