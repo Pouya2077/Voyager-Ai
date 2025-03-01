@@ -1,23 +1,39 @@
 
 import { useState, useEffect } from "react";
-import { fetchGumloopOutputs, startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
+import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import GlassMorphCard from "./GlassMorphCard";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 interface GumloopApiTestProps {
   className?: string;
-  city?: string; // Added city prop
-  autoStart?: boolean; // Added to allow automatic API call startup
+  city?: string;
+  autoStart?: boolean;
+  budget?: number;
+  travelers?: number;
+  interests?: string[];
+  startDate?: Date;
+  endDate?: Date;
 }
 
-const GumloopApiTest = ({ className, city = "Paris", autoStart = false }: GumloopApiTestProps) => {
-  const [workbookId, setWorkbookId] = useState("mqWGGXyZuhFwLQt5YDpyZC"); // Default workbook ID
-  const [userId, setUserId] = useState("1y5cS7wht6QDSjLHGBJOi6vu19y1"); // Default user ID
-  const [apiKey, setApiKey] = useState("4997b5ac80a9402d977502ac41891eec"); // Default API key
+const GumloopApiTest = ({ 
+  className, 
+  city = "Paris", 
+  autoStart = false,
+  budget = 1000,
+  travelers = 2,
+  interests = ["anything"],
+  startDate = new Date(),
+  endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+}: GumloopApiTestProps) => {
+  // Update the savedItemId to match the new workbook
+  const [userId, setUserId] = useState("1y5cS7wht6QDSjLHGBJOi6vu19y1");
+  const [savedItemId, setSavedItemId] = useState("veV5ZPJy5nYw4pQGdceWD5"); // Updated workbook ID
+  const [apiKey, setApiKey] = useState("4997b5ac80a9402d977502ac41891eec");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [runId, setRunId] = useState("");
@@ -53,7 +69,7 @@ const GumloopApiTest = ({ className, city = "Paris", autoStart = false }: Gumloo
   };
   
   const handleTestApi = async () => {
-    if (!workbookId.trim()) {
+    if (!savedItemId.trim()) {
       toast.error("Please enter a workbook ID");
       return;
     }
@@ -71,12 +87,26 @@ const GumloopApiTest = ({ className, city = "Paris", autoStart = false }: Gumloo
     try {
       console.log(`Starting Gumloop pipeline with city: ${city}`);
       
-      // Start the pipeline with the city as input
+      // Format dates for the API
+      const formattedStartDate = format(startDate, "MMMM do");
+      const formattedEndDate = format(endDate, "MMMM do");
+      
+      // Create all required inputs for the new API endpoint
+      const pipelineInputs = [
+        { input_name: "destination", value: city },
+        { input_name: "budget", value: budget.toString() },
+        { input_name: "interest", value: interests.join(", ") || "anything" },
+        { input_name: "num_travelers", value: travelers.toString() },
+        { input_name: "start_date", value: formattedStartDate },
+        { input_name: "end_date", value: formattedEndDate }
+      ];
+      
+      // Start the pipeline with all inputs
       const pipelineResponse = await startGumloopPipeline(
         userId,
-        workbookId,
+        savedItemId,
         apiKey,
-        [{ input_name: "city", value: city }]
+        pipelineInputs
       );
       
       if (pipelineResponse && pipelineResponse.run_id) {
@@ -155,8 +185,8 @@ const GumloopApiTest = ({ className, city = "Paris", autoStart = false }: Gumloo
               <Label htmlFor="workbook-id">Gumloop Workbook ID</Label>
               <Input
                 id="workbook-id"
-                value={workbookId}
-                onChange={(e) => setWorkbookId(e.target.value)}
+                value={savedItemId}
+                onChange={(e) => setSavedItemId(e.target.value)}
                 placeholder="Enter your workbook ID"
               />
             </div>

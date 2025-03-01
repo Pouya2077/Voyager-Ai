@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for interacting with the Gumloop API
  */
@@ -117,15 +116,13 @@ export const getPipelineRunStatus = async (
  * This is a helper function to map API results to your application's data structure
  */
 export const transformGumloopToItinerary = (gumloopData: any) => {
-  // This is a placeholder implementation
-  // Modify according to your actual API response structure
   try {
     const { outputs } = gumloopData;
     
-    // Example transformation - adjust based on your actual Gumloop response format
+    // Map the sights data from the new API format
     return {
       destination: outputs.destination || "",
-      days: outputs.itinerary || [],
+      days: outputs.sights || [], // Using sights instead of itinerary
       summary: outputs.summary || "",
       // Add other fields as needed
     };
