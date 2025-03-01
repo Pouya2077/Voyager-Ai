@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -6,7 +5,7 @@ import ItineraryCard from "@/components/ItineraryCard";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Clock, BadgeDollarSign, Users, Heart, Share, Download, Printer, Loader2, Plane, Hotel, Landmark } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, BadgeDollarSign, Users, Heart, Share, Download, Printer, Loader2, Plane, Hotel, Landmark, Link as LinkIcon } from "lucide-react";
 import { format } from "date-fns";
 import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
 import { toast } from "sonner";
@@ -36,10 +35,11 @@ const Itinerary = () => {
   const [flights, setFlights] = useState<string[]>([]);
   const [activities, setActivities] = useState<string[]>([]);
   const [accommodations, setAccommodations] = useState<string[]>([]);
+  const [accommodationLinks, setAccommodationLinks] = useState<string[]>([]);
+  const [flightLinks, setFlightLinks] = useState<string[]>([]);
   const [isApiLoading, setIsApiLoading] = useState(false);
   const [runId, setRunId] = useState<string | null>(null);
   const [runStatus, setRunStatus] = useState<string | null>(null);
-  const [runLogs, setRunLogs] = useState<string[]>([]);
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -47,7 +47,7 @@ const Itinerary = () => {
     if (location.state?.tripDetails) {
       setTripDetails(location.state.tripDetails);
       
-      fetchDataFromGumloop(location.state?.tripDetails?.destination);
+      fetchDataFromGumloop(location.state.tripDetails);
     } else {
       navigate("/plan");
     }
@@ -77,21 +77,21 @@ const Itinerary = () => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const fetchDataFromGumloop = async (destination: string) => {
-    if (!destination) return;
+  const fetchDataFromGumloop = async (details: TripDetails) => {
+    if (!details || !details.destination) return;
     
     setIsApiLoading(true);
     startTimer();
     
     try {
-      const city = destination.split(',')[0];
-      const formattedStartDate = tripDetails ? format(tripDetails.startDate, "MMMM do") : "";
-      const formattedEndDate = tripDetails ? format(tripDetails.endDate, "MMMM do") : "";
+      const city = details.destination.split(',')[0];
+      const formattedStartDate = format(details.startDate, "MMMM do");
+      const formattedEndDate = format(details.endDate, "MMMM do");
       
       const pipelineInputs = [
         { input_name: "destination", value: city },
-        { input_name: "budget", value: tripDetails ? tripDetails.budget.toString() : "1000" },
-        { input_name: "num_travelers", value: tripDetails ? tripDetails.travelers.toString() : "2" },
+        { input_name: "budget", value: details.budget.toString() },
+        { input_name: "num_travelers", value: details.travelers.toString() },
         { input_name: "start_date", value: formattedStartDate },
         { input_name: "end_date", value: formattedEndDate }
       ];
@@ -137,10 +137,6 @@ const Itinerary = () => {
       console.log("Gumloop Pipeline Status:", statusResponse);
       setRunStatus(statusResponse.state);
       
-      if (statusResponse.log && statusResponse.log.length > 0) {
-        setRunLogs(statusResponse.log);
-      }
-      
       if (statusResponse.state === "DONE") {
         if (statusResponse.outputs) {
           console.log("API outputs:", statusResponse.outputs);
@@ -160,6 +156,16 @@ const Itinerary = () => {
             setAccommodations(Array.isArray(statusResponse.outputs.accommodations) ? 
               statusResponse.outputs.accommodations : 
               [statusResponse.outputs.accommodations]);
+          }
+          if (statusResponse.outputs["accommodation links"]) {
+            setAccommodationLinks(Array.isArray(statusResponse.outputs["accommodation links"]) ? 
+              statusResponse.outputs["accommodation links"] : 
+              [statusResponse.outputs["accommodation links"]]);
+          }
+          if (statusResponse.outputs["flight links"]) {
+            setFlightLinks(Array.isArray(statusResponse.outputs["flight links"]) ? 
+              statusResponse.outputs["flight links"] : 
+              [statusResponse.outputs["flight links"]]);
           }
         }
         setIsLoading(false);
@@ -247,40 +253,6 @@ const Itinerary = () => {
     setIsSaved(!isSaved);
   };
 
-  if (isLoading || !tripDetails) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 pt-32 pb-20 flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-block rounded-full bg-primary/10 p-4 mb-6">
-              <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Generating Your Perfect Itinerary</h2>
-            <p className="text-muted-foreground mb-6">
-              Our AI is crafting a personalized travel plan for your trip to {tripDetails?.destination}
-            </p>
-            
-            {isApiLoading && (
-              <div className="w-full max-w-md mx-auto">
-                <div className="flex items-center gap-2 mb-2 justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span className="text-sm font-medium">
-                    Processing {runStatus && `(${runStatus})`} - {formatElapsedTime()}
-                  </span>
-                </div>
-                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full bg-primary animate-progress"></div>
-                </div>
-                {/* Removed the Recent logs section */}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const renderLink = (text: string) => {
     if (!text) return '';
     
@@ -317,6 +289,40 @@ const Itinerary = () => {
     
     return text;
   };
+
+  if (isLoading || !tripDetails) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 pt-32 pb-20 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block rounded-full bg-primary/10 p-4 mb-6">
+              <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Generating Your Perfect Itinerary</h2>
+            <p className="text-muted-foreground mb-6">
+              Our AI is crafting a personalized travel plan for your trip to {tripDetails?.destination}
+            </p>
+            
+            {isApiLoading && (
+              <div className="w-full max-w-md mx-auto">
+                <div className="flex items-center gap-2 mb-2 justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-sm font-medium">
+                    Processing {runStatus && `(${runStatus})`} - {formatElapsedTime()}
+                  </span>
+                </div>
+                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                  <div className="h-full bg-primary animate-progress"></div>
+                </div>
+                {/* Removed the Recent logs section */}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -484,6 +490,52 @@ const Itinerary = () => {
                   )}
                 </div>
                 
+                {/* Flight Links Section */}
+                <div className="mb-10">
+                  <div className="flex items-center mb-4">
+                    <LinkIcon className="mr-2 h-5 w-5 text-primary" />
+                    <h2 className="text-2xl font-bold">Flight Links</h2>
+                    {flightLinks.length > 0 && (
+                      <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {flightLinks.length} resources
+                      </span>
+                    )}
+                  </div>
+                  
+                  {flightLinks && flightLinks.length > 0 ? (
+                    <GlassMorphCard>
+                      <ul className="space-y-3">
+                        {flightLinks.map((link, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
+                              {index + 1}
+                            </span>
+                            <a 
+                              href={link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline break-all"
+                            >
+                              {link}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </GlassMorphCard>
+                  ) : isApiLoading ? (
+                    <div className="flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg p-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                      <span className="text-sm text-muted-foreground">Gathering flight resources...</span>
+                    </div>
+                  ) : (
+                    <GlassMorphCard>
+                      <p className="text-muted-foreground text-sm">
+                        No flight links available. Try customizing your travel dates or budget.
+                      </p>
+                    </GlassMorphCard>
+                  )}
+                </div>
+                
                 {/* Accommodations Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
@@ -518,6 +570,52 @@ const Itinerary = () => {
                     <GlassMorphCard>
                       <p className="text-muted-foreground text-sm">
                         No accommodation information available. Try customizing your trip duration or budget.
+                      </p>
+                    </GlassMorphCard>
+                  )}
+                </div>
+                
+                {/* Accommodation Links Section */}
+                <div className="mb-10">
+                  <div className="flex items-center mb-4">
+                    <LinkIcon className="mr-2 h-5 w-5 text-primary" />
+                    <h2 className="text-2xl font-bold">Accommodation Links</h2>
+                    {accommodationLinks.length > 0 && (
+                      <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {accommodationLinks.length} resources
+                      </span>
+                    )}
+                  </div>
+                  
+                  {accommodationLinks && accommodationLinks.length > 0 ? (
+                    <GlassMorphCard>
+                      <ul className="space-y-3">
+                        {accommodationLinks.map((link, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
+                              {index + 1}
+                            </span>
+                            <a 
+                              href={link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline break-all"
+                            >
+                              {link}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </GlassMorphCard>
+                  ) : isApiLoading ? (
+                    <div className="flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg p-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                      <span className="text-sm text-muted-foreground">Gathering accommodation resources...</span>
+                    </div>
+                  ) : (
+                    <GlassMorphCard>
+                      <p className="text-muted-foreground text-sm">
+                        No accommodation links available. Try customizing your trip duration or budget.
                       </p>
                     </GlassMorphCard>
                   )}

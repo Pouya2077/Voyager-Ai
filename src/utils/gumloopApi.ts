@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for interacting with the Gumloop API
  */
@@ -58,8 +57,11 @@ export const startGumloopPipeline = async (
   inputs: Array<{input_name: string, value: any}>
 ) => {
   try {
-    console.log("Starting pipeline with inputs:", JSON.stringify(inputs));
-    console.log(`User ID: ${userId}, Saved Item ID: ${savedItemId}`);
+    // Detailed logging for debugging
+    console.log("=== GUMLOOP API INPUTS DEBUG ===");
+    console.log(`User ID: ${userId}`);
+    console.log(`Saved Item ID: ${savedItemId}`);
+    console.log("Pipeline inputs:", JSON.stringify(inputs, null, 2));
     
     const requestBody = {
       user_id: userId,
@@ -67,7 +69,7 @@ export const startGumloopPipeline = async (
       pipeline_inputs: inputs
     };
     
-    console.log("Full request body:", JSON.stringify(requestBody));
+    console.log("Full request body:", JSON.stringify(requestBody, null, 2));
     
     const response = await fetch('https://api.gumloop.com/api/v1/start_pipeline', {
       method: 'POST',

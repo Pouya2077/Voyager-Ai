@@ -65,15 +65,19 @@ const TripPlanner = () => {
   };
 
   const handleBudgetChange = (budget: number) => {
+    console.log("Budget changed to:", budget);
     setTripDetails({ ...tripDetails, budget });
   };
 
   const handleTravelersChange = (travelers: number) => {
+    console.log("Travelers changed to:", travelers);
     setTripDetails({ ...tripDetails, travelers });
   };
 
   const handleGenerateItinerary = () => {
     setLoading(true);
+    
+    console.log("Sending trip details to itinerary:", tripDetails);
     
     setTimeout(() => {
       setLoading(false);
@@ -173,12 +177,12 @@ const TripPlanner = () => {
                 
                 <div className="mt-8">
                   <h3 className="text-lg font-medium mb-4">How many travelers?</h3>
-                  <div className="flex space-x-3">
-                    {[1, 2, 3, 4, "5+"].map((num) => (
+                  <div className="flex space-x-3 flex-wrap">
+                    {[1, 2, 3, 4, 5].map((num) => (
                       <button
                         key={num}
-                        onClick={() => typeof num === "number" && handleTravelersChange(num)}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
+                        onClick={() => handleTravelersChange(num)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all mb-2 ${
                           tripDetails.travelers === num
                             ? "border-primary bg-primary/5 text-primary"
                             : "border-border hover:border-primary/50"
