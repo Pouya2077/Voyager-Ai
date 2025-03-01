@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for interacting with the Gumloop API
  */
@@ -53,6 +54,8 @@ export const startGumloopPipeline = async (
   inputs: Array<{input_name: string, value: any}>
 ) => {
   try {
+    console.log("Starting pipeline with inputs:", JSON.stringify(inputs));
+    
     const response = await fetch('https://api.gumloop.com/api/v1/start_pipeline', {
       method: 'POST',
       headers: {
@@ -118,12 +121,15 @@ export const getPipelineRunStatus = async (
 export const transformGumloopToItinerary = (gumloopData: any) => {
   try {
     const { outputs } = gumloopData;
+    console.log("Transforming API outputs:", outputs);
     
     // Map the sights data from the new API format
     return {
       destination: outputs.destination || "",
       days: outputs.sights || [], // Using sights instead of itinerary
       summary: outputs.summary || "",
+      accommodation: outputs.accommodation || [],
+      flights: outputs.flights || [],
       // Add other fields as needed
     };
   } catch (error) {

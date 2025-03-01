@@ -85,21 +85,25 @@ const GumloopApiTest = ({
     const timerInt = startTimer();
     
     try {
-      console.log(`Starting Gumloop pipeline with city: ${city}`);
+      console.log(`Starting Gumloop pipeline with city: ${city}, budget: ${budget}, travelers: ${travelers}, interests: ${interests.join(', ')}`);
+      console.log(`Travel dates: ${format(startDate, "MMMM do")} - ${format(endDate, "MMMM do")}`);
       
       // Format dates for the API
       const formattedStartDate = format(startDate, "MMMM do");
       const formattedEndDate = format(endDate, "MMMM do");
       
       // Create all required inputs for the new API endpoint
+      // Ensure all values are strings as expected by the API
       const pipelineInputs = [
         { input_name: "destination", value: city },
         { input_name: "budget", value: budget.toString() },
-        { input_name: "interest", value: interests.join(", ") || "anything" },
+        { input_name: "interest", value: Array.isArray(interests) ? interests.join(", ") : interests },
         { input_name: "num_travelers", value: travelers.toString() },
         { input_name: "start_date", value: formattedStartDate },
         { input_name: "end_date", value: formattedEndDate }
       ];
+      
+      console.log("Pipeline inputs:", pipelineInputs);
       
       // Start the pipeline with all inputs
       const pipelineResponse = await startGumloopPipeline(
