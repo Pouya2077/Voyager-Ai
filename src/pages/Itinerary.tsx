@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -95,6 +96,14 @@ const Itinerary = () => {
         { input_name: "end_date", value: formattedEndDate }
       ];
       
+      // Debug log to see the inputs being sent to the API
+      console.log("Gumloop API Inputs:", {
+        userId: GUMLOOP_USER_ID,
+        savedItemId: GUMLOOP_SAVED_ITEM_ID,
+        apiKey: GUMLOOP_API_KEY.substring(0, 4) + "...", // Show only first few chars of API key for security
+        pipelineInputs
+      });
+      
       const response = await startGumloopPipeline(
         GUMLOOP_USER_ID,
         GUMLOOP_SAVED_ITEM_ID,
@@ -102,6 +111,7 @@ const Itinerary = () => {
         pipelineInputs
       );
       
+      console.log("Gumloop Pipeline Response:", response);
       setRunId(response.run_id);
       
       if (response.run_id) {
@@ -124,6 +134,7 @@ const Itinerary = () => {
         GUMLOOP_API_KEY
       );
       
+      console.log("Gumloop Pipeline Status:", statusResponse);
       setRunStatus(statusResponse.state);
       
       if (statusResponse.log && statusResponse.log.length > 0) {
@@ -261,14 +272,7 @@ const Itinerary = () => {
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                   <div className="h-full bg-primary animate-progress"></div>
                 </div>
-                {runLogs && runLogs.length > 0 && (
-                  <div className="mt-4 text-left bg-secondary/20 p-3 rounded-md text-xs max-h-40 overflow-y-auto">
-                    <p className="font-medium mb-1">Recent logs:</p>
-                    {runLogs.slice(-5).map((log, i) => (
-                      <div key={i} className="mb-1 text-muted-foreground">{log}</div>
-                    ))}
-                  </div>
-                )}
+                {/* Removed the Recent logs section */}
               </div>
             )}
           </div>

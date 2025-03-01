@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
 import { Button } from "@/components/ui/button";
@@ -31,9 +30,8 @@ const GumloopApiTest = ({
   startDate = new Date(),
   endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 }: GumloopApiTestProps) => {
-  // Update the savedItemId to match the new workbook
   const [userId, setUserId] = useState("1y5cS7wht6QDSjLHGBJOi6vu19y1");
-  const [savedItemId, setSavedItemId] = useState("veV5ZPJy5nYw4pQGdceWD5"); // Updated workbook ID
+  const [savedItemId, setSavedItemId] = useState("veV5ZPJy5nYw4pQGdceWD5");
   const [apiKey, setApiKey] = useState("4997b5ac80a9402d977502ac41891eec");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
@@ -44,13 +42,11 @@ const GumloopApiTest = ({
   const [timerInterval, setTimerInterval] = useState<number | null>(null);
   
   useEffect(() => {
-    // If autoStart is true, automatically start the API call
     if (autoStart) {
       handleTestApi();
     }
     
     return () => {
-      // Clear the timer on component unmount
       if (timerInterval) clearInterval(timerInterval);
     };
   }, [autoStart, city]);
@@ -89,11 +85,9 @@ const GumloopApiTest = ({
       console.log(`Starting Gumloop pipeline with city: ${city}, budget: ${budget}, travelers: ${travelers}`);
       console.log(`Travel dates: ${format(startDate, "MMMM do")} - ${format(endDate, "MMMM do")}`);
       
-      // Format dates for the API
       const formattedStartDate = format(startDate, "MMMM do");
       const formattedEndDate = format(endDate, "MMMM do");
       
-      // Create all required inputs for the new API endpoint based on the example
       const pipelineInputs = [
         { input_name: "destination", value: city },
         { input_name: "budget", value: budget.toString() },
@@ -102,15 +96,21 @@ const GumloopApiTest = ({
         { input_name: "end_date", value: formattedEndDate }
       ];
       
-      console.log("Pipeline inputs:", pipelineInputs);
+      console.log("Gumloop API Inputs:", {
+        userId,
+        savedItemId,
+        apiKey: apiKey.substring(0, 4) + "...",
+        pipelineInputs
+      });
       
-      // Start the pipeline with all inputs
       const pipelineResponse = await startGumloopPipeline(
         userId,
         savedItemId,
         apiKey,
         pipelineInputs
       );
+      
+      console.log("Gumloop Pipeline Response:", pipelineResponse);
       
       if (pipelineResponse && pipelineResponse.run_id) {
         setRunId(pipelineResponse.run_id);
@@ -131,17 +131,17 @@ const GumloopApiTest = ({
       let isComplete = false;
       let attempts = 0;
       
-      while (!isComplete && attempts < 60) { // Limit to 60 attempts (5 minutes with 5s interval)
+      while (!isComplete && attempts < 60) {
         attempts++;
         
         const statusResponse = await getPipelineRunStatus(runId, userId, apiKey);
+        console.log("Gumloop Pipeline Status (attempt " + attempts + "):", statusResponse);
         
         setRunStatus(statusResponse.state);
         if (statusResponse.log && statusResponse.log.length > 0) {
           setRunLogs(statusResponse.log.filter((log: string) => !log.includes("__system__")));
         }
         
-        // Check if there are outputs or if the pipeline is done
         if (statusResponse.state === "COMPLETED" || statusResponse.state === "ERROR" || statusResponse.outputs) {
           isComplete = true;
           setResults(statusResponse);
@@ -153,7 +153,6 @@ const GumloopApiTest = ({
           stopTimer(timerInt);
           setLoading(false);
         } else {
-          // Wait before polling again
           await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }

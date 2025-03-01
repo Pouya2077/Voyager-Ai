@@ -17,6 +17,8 @@ export const fetchGumloopOutputs = async (
   inputs?: Record<string, any>
 ) => {
   try {
+    console.log(`Fetching Gumloop outputs for workbook ${workbookId} with inputs:`, inputs);
+    
     const response = await fetch(`https://api.gumloop.com/v1/workbooks/${workbookId}/run`, {
       method: "POST",
       headers: {
@@ -31,7 +33,9 @@ export const fetchGumloopOutputs = async (
       throw new Error(`Gumloop API error: ${response.status} ${errorData.message || response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log("Gumloop outputs response:", data);
+    return data;
   } catch (error) {
     console.error("Failed to fetch from Gumloop:", error);
     throw error;
@@ -55,6 +59,15 @@ export const startGumloopPipeline = async (
 ) => {
   try {
     console.log("Starting pipeline with inputs:", JSON.stringify(inputs));
+    console.log(`User ID: ${userId}, Saved Item ID: ${savedItemId}`);
+    
+    const requestBody = {
+      user_id: userId,
+      saved_item_id: savedItemId,
+      pipeline_inputs: inputs
+    };
+    
+    console.log("Full request body:", JSON.stringify(requestBody));
     
     const response = await fetch('https://api.gumloop.com/api/v1/start_pipeline', {
       method: 'POST',
@@ -62,11 +75,7 @@ export const startGumloopPipeline = async (
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        user_id: userId,
-        saved_item_id: savedItemId,
-        pipeline_inputs: inputs
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -74,7 +83,9 @@ export const startGumloopPipeline = async (
       throw new Error(`Gumloop API error: ${response.status} ${errorData.message || response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log("Pipeline start response:", data);
+    return data;
   } catch (error) {
     console.error("Failed to start Gumloop pipeline:", error);
     throw error;
@@ -95,6 +106,8 @@ export const getPipelineRunStatus = async (
   apiKey: string
 ) => {
   try {
+    console.log(`Getting pipeline status for run ID: ${runId}, user ID: ${userId}`);
+    
     const response = await fetch(`https://api.gumloop.com/api/v1/get_pl_run?run_id=${runId}&user_id=${userId}`, {
       method: 'GET',
       headers: {
@@ -107,7 +120,8 @@ export const getPipelineRunStatus = async (
       throw new Error(`Gumloop API error: ${response.status} ${errorData.message || response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Failed to get pipeline run status:", error);
     throw error;
