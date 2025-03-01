@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -365,7 +366,7 @@ const Itinerary = () => {
                     <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                     <h3 className="text-lg font-medium mb-2">Finding the best attractions for you...</h3>
                     <p className="text-sm text-muted-foreground mb-3 text-center">
-                      We're searching for the best attractions in {tripDetails.destination.split(',')[0]}
+                      We're searching for the best attractions in {tripDetails?.destination.split(',')[0]}
                     </p>
                     <div className="w-full max-w-md">
                       <div className="flex items-center gap-2 mb-2 justify-center">
@@ -398,6 +399,7 @@ const Itinerary = () => {
                   )}
                 </div>
                 
+                {/* Flights Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
                     <Plane className="mr-2 h-5 w-5 text-primary" />
@@ -436,6 +438,7 @@ const Itinerary = () => {
                   )}
                 </div>
                 
+                {/* Accommodations Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
                     <Hotel className="mr-2 h-5 w-5 text-primary" />
@@ -474,6 +477,7 @@ const Itinerary = () => {
                   )}
                 </div>
                 
+                {/* Activities Section */}
                 <div className="mb-6">
                   <div className="flex items-center mb-4">
                     <Landmark className="mr-2 h-5 w-5 text-primary" />

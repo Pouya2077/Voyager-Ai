@@ -3,11 +3,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Index from "./pages/Index";
 import TripPlanner from "./pages/TripPlanner";
 import Itinerary from "./pages/Itinerary";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import AnimatedTransition from "./components/AnimatedTransition";
 import GumloopApiTest from "./components/GumloopApiTest";
@@ -15,6 +16,9 @@ import GumloopApiTest from "./components/GumloopApiTest";
 const queryClient = new QueryClient();
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Initialize theme on app load
   useEffect(() => {
     // Check localStorage first
@@ -28,7 +32,16 @@ const App = () => {
       document.documentElement.classList.toggle("dark", prefersDark);
       localStorage.setItem("theme", prefersDark ? "dark" : "light");
     }
+
+    // Check if user is logged in
+    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+    setIsLoggedIn(loggedIn);
+    setIsLoading(false);
   }, []);
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-background"></div>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -37,29 +50,36 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={
+              <AnimatedTransition>
+                {isLoggedIn ? <Navigate to="/" /> : <Login />}
+              </AnimatedTransition>
+            } />
             <Route path="/" element={
               <AnimatedTransition>
-                <Index />
+                {!isLoggedIn ? <Navigate to="/login" /> : <Index />}
               </AnimatedTransition>
             } />
             <Route path="/plan" element={
               <AnimatedTransition>
-                <TripPlanner />
+                {!isLoggedIn ? <Navigate to="/login" /> : <TripPlanner />}
               </AnimatedTransition>
             } />
             <Route path="/itinerary" element={
               <AnimatedTransition>
-                <Itinerary />
+                {!isLoggedIn ? <Navigate to="/login" /> : <Itinerary />}
               </AnimatedTransition>
             } />
             <Route path="/gumloop-test" element={
               <AnimatedTransition>
-                <div className="container mx-auto px-4 pt-32 pb-20">
-                  <h1 className="text-3xl font-bold mb-8 text-center">Gumloop API Integration Test</h1>
-                  <div className="max-w-md mx-auto">
-                    <GumloopApiTest />
+                {!isLoggedIn ? <Navigate to="/login" /> : (
+                  <div className="container mx-auto px-4 pt-32 pb-20">
+                    <h1 className="text-3xl font-bold mb-8 text-center">Gumloop API Integration Test</h1>
+                    <div className="max-w-md mx-auto">
+                      <GumloopApiTest />
+                    </div>
                   </div>
-                </div>
+                )}
               </AnimatedTransition>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

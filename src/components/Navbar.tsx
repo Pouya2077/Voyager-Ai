@@ -1,149 +1,113 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
-import ThemeToggle from "./ThemeToggle";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
+import { Menu, X, LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
-
+  const [username, setUsername] = useState("");
+  const navigate = useNavigate();
+  
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
   }, []);
 
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location]);
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
-  const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "Plan Trip", href: "/plan" },
-    { name: "About", href: "#about" }
-  ];
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("username");
+    toast.success("Successfully logged out!");
+    navigate("/login");
+  };
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "py-3 bg-white/80 backdrop-blur-lg shadow-sm dark:bg-black/50 dark:backdrop-blur-lg dark:shadow-md"
-          : "py-5 bg-transparent"
-      }`}
-    >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center space-x-2 text-foreground transition-colors"
-          >
-            <span className="rounded-md bg-primary p-1">
-              <span className="block h-6 w-6 rounded-sm bg-white"></span>
-            </span>
-            <span className="font-semibold font-playfair text-xl">Voyager</span>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <Link to="/" className="text-xl font-bold">
+          Travel Planner
+        </Link>
+        
+        <div className="items-center hidden md:flex">
+          <Link to="/" className="mx-3 text-sm hover:text-primary">
+            Home
           </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === link.href
-                    ? "text-primary"
-                    : "text-foreground/80"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center space-x-4">
-            <ThemeToggle />
-            <Link to="/plan" className="btn-primary">
-              Plan Your Trip
-            </Link>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center space-x-4">
-            <ThemeToggle />
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="rounded-md p-2 text-foreground hover:bg-muted"
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
+          <Link to="/plan" className="mx-3 text-sm hover:text-primary">
+            Plan a Trip
+          </Link>
+          {/* Add more navigation links here */}
+        </div>
+        
+        <div className="flex items-center">
+          {username && (
+            <span className="mr-4 text-sm text-muted-foreground hidden md:block">
+              Welcome, {username}
+            </span>
+          )}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleLogout}
+            className="mr-2"
+            title="Logout"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
+          <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-2 md:hidden"
+            onClick={toggleMenu}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
         </div>
       </div>
-
+      
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="md:hidden h-screen bg-background dark:bg-background animate-slide-in-right fixed top-0 right-0 w-4/5 z-50 shadow-2xl">
-          <div className="flex items-center justify-between p-4 border-b">
-            <Link
-              to="/"
-              className="flex items-center space-x-2 text-foreground"
-            >
-              <span className="rounded-md bg-primary p-1">
-                <span className="block h-6 w-6 rounded-sm bg-white"></span>
-              </span>
-              <span className="font-semibold font-playfair text-xl">Voyager</span>
-            </Link>
-            <button
+        <div className="md:hidden bg-background/95 backdrop-blur-md py-4 border-b border-border">
+          <div className="container mx-auto px-4 flex flex-col space-y-3">
+            <Link 
+              to="/" 
+              className="py-2 text-sm hover:text-primary"
               onClick={() => setIsMenuOpen(false)}
-              className="rounded-md p-2 text-foreground hover:bg-muted"
-              aria-label="Close menu"
             >
-              <X size={24} />
-            </button>
+              Home
+            </Link>
+            <Link 
+              to="/plan" 
+              className="py-2 text-sm hover:text-primary"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Plan a Trip
+            </Link>
+            {/* Add more mobile navigation links here */}
+            {username && (
+              <div className="py-2 text-sm text-muted-foreground">
+                Logged in as {username}
+              </div>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout}
+              className="flex items-center justify-center"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
           </div>
-          <nav className="flex flex-col p-4 space-y-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                className={`p-2 rounded-md text-base font-medium transition-colors ${
-                  location.pathname === link.href
-                    ? "text-primary bg-primary/10"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-            <div className="pt-4 mt-4 border-t">
-              <Link
-                to="/plan"
-                className="w-full block text-center btn-primary"
-              >
-                Plan Your Trip
-              </Link>
-            </div>
-          </nav>
         </div>
-      )}
-
-      {/* Overlay for mobile menu */}
-      {isMenuOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-background/80 dark:bg-background/80 backdrop-blur-sm z-40"
-          onClick={() => setIsMenuOpen(false)}
-        ></div>
       )}
     </header>
   );
