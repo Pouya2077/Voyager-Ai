@@ -16,7 +16,7 @@ import GumloopApiTest from "./components/GumloopApiTest";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("isLoggedIn") === "true");
   const [isLoading, setIsLoading] = useState(true);
 
   // Check authentication status whenever localStorage changes
@@ -50,9 +50,6 @@ const App = () => {
       localStorage.setItem("theme", prefersDark ? "dark" : "light");
     }
 
-    // Check if user is logged in
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(loggedIn);
     setIsLoading(false);
   }, []);
 
@@ -69,7 +66,7 @@ const App = () => {
           <Routes>
             <Route path="/login" element={
               <AnimatedTransition>
-                {isLoggedIn ? <Navigate to="/" replace /> : <Login />}
+                {isLoggedIn ? <Navigate to="/" replace /> : <Login setIsLoggedIn={setIsLoggedIn} />}
               </AnimatedTransition>
             } />
             <Route path="/" element={

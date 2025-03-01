@@ -8,7 +8,11 @@ import { toast } from "sonner";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { ArrowRight, LogIn, User, Lock } from "lucide-react";
 
-const Login = () => {
+interface LoginProps {
+  setIsLoggedIn: (value: boolean) => void;
+}
+
+const Login = ({ setIsLoggedIn }: LoginProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +28,8 @@ const Login = () => {
       // Set login state
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("username", username);
+      // Update parent component state
+      setIsLoggedIn(true);
       toast.success("Successfully logged in!");
       // Force navigate to home page
       navigate("/", { replace: true });
@@ -33,6 +39,8 @@ const Login = () => {
   const handleSkip = () => {
     // Set login state to true even when skipping
     localStorage.setItem("isLoggedIn", "true");
+    // Update parent component state
+    setIsLoggedIn(true);
     // Force navigate to home page with replace to prevent back navigation to login
     navigate("/", { replace: true });
   };
