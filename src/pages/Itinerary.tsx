@@ -272,6 +272,45 @@ const Itinerary = () => {
     );
   }
 
+  // Helper function to render links
+  const renderLink = (text: string) => {
+    // Check if text contains a URL pattern
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const hasUrl = urlRegex.test(text);
+    
+    if (hasUrl) {
+      const parts = text.split(urlRegex);
+      const matches = text.match(urlRegex) || [];
+      
+      return (
+        <span>
+          {parts.map((part, i) => {
+            // If this part is a URL (it's followed by a match)
+            if (i < matches.length) {
+              return (
+                <React.Fragment key={i}>
+                  {part}
+                  <a 
+                    href={matches[i]} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {matches[i]}
+                  </a>
+                </React.Fragment>
+              );
+            }
+            // Last part (or only part if no URLs)
+            return part;
+          })}
+        </span>
+      );
+    }
+    
+    return text;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -419,7 +458,7 @@ const Itinerary = () => {
                             <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
                               {index + 1}
                             </span>
-                            <span>{flight}</span>
+                            {renderLink(flight)}
                           </li>
                         ))}
                       </ul>
@@ -458,7 +497,7 @@ const Itinerary = () => {
                             <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
                               {index + 1}
                             </span>
-                            <span>{accommodation}</span>
+                            {renderLink(accommodation)}
                           </li>
                         ))}
                       </ul>
@@ -497,7 +536,7 @@ const Itinerary = () => {
                             <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
                               {index + 1}
                             </span>
-                            <span>{activity}</span>
+                            {renderLink(activity)}
                           </li>
                         ))}
                       </ul>
@@ -579,7 +618,7 @@ const Itinerary = () => {
                           <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
                             {index + 1}
                           </span>
-                          <span>{sight}</span>
+                          {renderLink(sight)}
                         </li>
                       ))}
                     </ul>
