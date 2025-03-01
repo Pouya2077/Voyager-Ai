@@ -8,24 +8,27 @@ import { toast } from "sonner";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { ArrowRight, LogIn, User, Lock, Mail } from "lucide-react";
 import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface LoginProps {
   setIsLoggedIn: (value: boolean) => void;
 }
 
 const Login = ({ setIsLoggedIn }: LoginProps) => {
+  // Form state
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("sign-up");
   const navigate = useNavigate();
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleAuthentication = async (e: React.FormEvent, mode: "sign-up" | "sign-in") => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Call Gumloop API for sign-up
+      // Call Gumloop API for sign-up or sign-in
       const userId = "1y5cS7wht6QDSjLHGBJOi6vu19y1";
       const savedItemId = "2KLH8qYh4rTQf4qYM1Sfh3";
       const apiKey = "4997b5ac80a9402d977502ac41891eec";
@@ -34,7 +37,7 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
         { input_name: "name", value: username },
         { input_name: "email", value: email },
         { input_name: "password", value: password },
-        { input_name: "mode", value: "sign-up" }
+        { input_name: "mode", value: mode }
       ];
 
       // Start the pipeline with all inputs
@@ -74,11 +77,11 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
               localStorage.setItem("email", email);
               // Update parent component state
               setIsLoggedIn(true);
-              toast.success("Successfully signed up!");
+              toast.success(mode === "sign-up" ? "Successfully signed up!" : "Successfully signed in!");
               // Force navigate to home page
               navigate("/", { replace: true });
             } else {
-              toast.error("Sign up failed: " + (authResult?.message || "Unknown error"));
+              toast.error(`${mode === "sign-up" ? "Sign up" : "Sign in"} failed: ${authResult?.message || "Unknown error"}`);
             }
           } else {
             // Wait before polling again
@@ -87,14 +90,14 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
         }
         
         if (!isComplete) {
-          toast.error("Sign up took too long, please try again");
+          toast.error(`${mode === "sign-up" ? "Sign up" : "Sign in"} took too long, please try again`);
         }
       } else {
-        throw new Error("Failed to start authentication pipeline");
+        throw new Error(`Failed to start authentication pipeline`);
       }
     } catch (error) {
-      console.error("Sign up error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to sign up");
+      console.error(`${mode === "sign-up" ? "Sign up" : "Sign in"} error:`, error);
+      toast.error(error instanceof Error ? error.message : `Failed to ${mode === "sign-up" ? "sign up" : "sign in"}`);
     } finally {
       setIsLoading(false);
     }
@@ -114,73 +117,137 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">Travel Planner</h1>
-          <p className="text-muted-foreground mt-2">Sign up to plan your next adventure</p>
+          <p className="text-muted-foreground mt-2">Sign up or sign in to plan your next adventure</p>
         </div>
 
         <GlassMorphCard className="w-full">
-          <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
+          <Tabs 
+            defaultValue="sign-up" 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="grid grid-cols-2 w-full mb-6">
+              <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
+              <TabsTrigger value="sign-in">Sign In</TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
+            <TabsContent value="sign-up">
+              <form onSubmit={(e) => handleAuthentication(e, "sign-up")} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Enter your username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <span className="flex items-center">
-                  <span className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
-                  Signing up...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Sign Up
-                </span>
-              )}
-            </Button>
-          </form>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <span className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
+                      Signing up...
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Sign Up
+                    </span>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="sign-in">
+              <form onSubmit={(e) => handleAuthentication(e, "sign-in")} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <span className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
+                      Signing in...
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Sign In
+                    </span>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
 
           <div className="mt-4 pt-4 border-t border-border">
             <Button 
