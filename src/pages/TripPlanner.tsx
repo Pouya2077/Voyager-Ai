@@ -7,7 +7,7 @@ import TripDurationPicker from "@/components/TripDurationPicker";
 import BudgetSlider from "@/components/BudgetSlider";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Plane, Calendar, Wallet, Users, Compass, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plane, Calendar, Wallet, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const TripPlanner = () => {
@@ -26,12 +26,6 @@ const TripPlanner = () => {
     travelers: 2,
     interests: [] as string[],
   });
-  
-  const interests = [
-    "Adventure", "Beaches", "Culture", "Food & Dining", 
-    "History", "Nature", "Nightlife", "Relaxation", 
-    "Shopping", "Sightseeing", "Sports", "Wildlife"
-  ];
 
   const handleNextStep = () => {
     if (currentStep === 1 && !tripDetails.destination) {
@@ -39,7 +33,7 @@ const TripPlanner = () => {
       return;
     }
     
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
@@ -81,15 +75,6 @@ const TripPlanner = () => {
     setTripDetails({ ...tripDetails, travelers });
   };
 
-  const toggleInterest = (interest: string) => {
-    setTripDetails({
-      ...tripDetails,
-      interests: tripDetails.interests.includes(interest)
-        ? tripDetails.interests.filter((i) => i !== interest)
-        : [...tripDetails.interests, interest],
-    });
-  };
-
   const handleGenerateItinerary = () => {
     setLoading(true);
     
@@ -109,7 +94,7 @@ const TripPlanner = () => {
           {/* Progress Steps */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
-              {[1, 2, 3, 4].map((step) => (
+              {[1, 2, 3].map((step) => (
                 <div
                   key={step}
                   className="flex flex-col items-center"
@@ -126,7 +111,6 @@ const TripPlanner = () => {
                     {step === 1 && <Plane size={20} />}
                     {step === 2 && <Calendar size={20} />}
                     {step === 3 && <Wallet size={20} />}
-                    {step === 4 && <Compass size={20} />}
                   </div>
                   <span
                     className={`text-xs font-medium hidden sm:block ${
@@ -138,7 +122,6 @@ const TripPlanner = () => {
                     {step === 1 && "Destination"}
                     {step === 2 && "Dates"}
                     {step === 3 && "Budget"}
-                    {step === 4 && "Interests"}
                   </span>
                 </div>
               ))}
@@ -151,7 +134,7 @@ const TripPlanner = () => {
                 className="absolute inset-0 flex items-center">
                 <div
                   className="h-1 bg-primary rounded-full transition-all duration-500"
-                  style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
+                  style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -248,31 +231,6 @@ const TripPlanner = () => {
                 </div>
               </div>
             )}
-
-            {currentStep === 4 && (
-              <div className="animate-fade-in">
-                <h2 className="text-2xl font-bold mb-6">What are you interested in?</h2>
-                <p className="text-muted-foreground mb-6">
-                  Select the experiences you'd like to include in your itinerary
-                </p>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {interests.map((interest) => (
-                    <button
-                      key={interest}
-                      onClick={() => toggleInterest(interest)}
-                      className={`p-3 rounded-xl border transition-all text-left ${
-                        tripDetails.interests.includes(interest)
-                          ? "border-primary bg-primary/5 text-primary"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      {interest}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </GlassMorphCard>
 
           {/* Navigation Buttons */}
@@ -298,7 +256,7 @@ const TripPlanner = () => {
                 </>
               ) : (
                 <>
-                  {currentStep < 4 ? "Next" : "Create Itinerary"}
+                  {currentStep < 3 ? "Next" : "Create Itinerary"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
