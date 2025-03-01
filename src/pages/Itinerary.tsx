@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import ItineraryCard from "@/components/ItineraryCard";
@@ -272,9 +271,7 @@ const Itinerary = () => {
     );
   }
 
-  // Helper function to render links
   const renderLink = (text: string) => {
-    // Check if text contains a URL pattern
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const hasUrl = urlRegex.test(text);
     
@@ -285,7 +282,6 @@ const Itinerary = () => {
       return (
         <span>
           {parts.map((part, i) => {
-            // If this part is a URL (it's followed by a match)
             if (i < matches.length) {
               return (
                 <React.Fragment key={i}>
@@ -301,7 +297,6 @@ const Itinerary = () => {
                 </React.Fragment>
               );
             }
-            // Last part (or only part if no URLs)
             return part;
           })}
         </span>
