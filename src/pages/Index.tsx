@@ -1,17 +1,21 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import GlassMorphCard from "@/components/GlassMorphCard";
+import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
 import { ArrowRight, Globe, Map, Calendar, CreditCard, Compass, Sparkles } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
   const featuresRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [gumloopRunId, setGumloopRunId] = useState<string | null>(null);
   const [gumloopResponse, setGumloopResponse] = useState<any>(null);
+  const [runStatus, setRunStatus] = useState<string | null>(null);
+  const [runLogs, setRunLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pollingInterval, setPollingInterval] = useState<number | null>(null);
 
   // Animation for the features section
   useEffect(() => {
@@ -36,34 +40,75 @@ const Index = () => {
     };
   }, []);
 
-  // Gumloop API call
+  // Clear polling interval when component unmounts
   useEffect(() => {
-    setIsLoading(true);
-    
-    const options = {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer 4997b5ac80a9402d977502ac41891eec',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "user_id": "1y5cS7wht6QDSjLHGBJOi6vu19y1",
-        "saved_item_id": "mqWGGXyZuhFwLQt5YDpyZC",
-        "pipeline_inputs": [{"input_name":"city","value":"Paris"}]
-      })
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
     };
+  }, [pollingInterval]);
 
-    fetch('https://api.gumloop.com/api/v1/start_pipeline', options)
-      .then(response => response.json())
-      .then(data => {
-        setGumloopResponse(data);
-        setIsLoading(false);
-      })
-      .catch(err => {
+  // Initial Gumloop API call
+  useEffect(() => {
+    const startPipeline = async () => {
+      setIsLoading(true);
+      try {
+        // API constants
+        const apiKey = "4997b5ac80a9402d977502ac41891eec";
+        const userId = "1y5cS7wht6QDSjLHGBJOi6vu19y1";
+        const savedItemId = "mqWGGXyZuhFwLQt5YDpyZC";
+        
+        // Start the pipeline
+        const pipelineResponse = await startGumloopPipeline(
+          userId,
+          savedItemId,
+          apiKey,
+          [{ input_name: "city", value: "Paris" }]
+        );
+        
+        setGumloopRunId(pipelineResponse.run_id);
+        setGumloopResponse(pipelineResponse);
+        
+        // Start polling for the result
+        const intervalId = window.setInterval(async () => {
+          if (pipelineResponse.run_id) {
+            try {
+              const runData = await getPipelineRunStatus(
+                pipelineResponse.run_id,
+                userId,
+                apiKey
+              );
+              
+              setRunStatus(runData.state);
+              setRunLogs(runData.log || []);
+              
+              // If pipeline is done or failed, stop polling and update response
+              if (runData.state === "DONE" || runData.state === "FAILED" || runData.state === "TERMINATED") {
+                clearInterval(intervalId);
+                setPollingInterval(null);
+                setGumloopResponse(runData);
+                setIsLoading(false);
+              }
+            } catch (err) {
+              console.error("Error polling for run status:", err);
+              clearInterval(intervalId);
+              setPollingInterval(null);
+              setError("Error checking pipeline status");
+              setIsLoading(false);
+            }
+          }
+        }, 3000); // Poll every 3 seconds
+        
+        setPollingInterval(intervalId);
+      } catch (err: any) {
         console.error(err);
-        setError(err.message || "An error occurred");
+        setError(err.message || "An error occurred starting the pipeline");
         setIsLoading(false);
-      });
+      }
+    };
+    
+    startPipeline();
   }, []);
 
   const handleGetStarted = () => {
@@ -118,15 +163,44 @@ const Index = () => {
             <div className="w-full max-w-lg mx-auto mb-8 p-4 border border-border rounded-lg bg-background/80 backdrop-blur-sm">
               <h3 className="text-lg font-semibold mb-2">Gumloop API Test Result:</h3>
               {isLoading ? (
-                <p className="text-muted-foreground">Loading data from Gumloop...</p>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground flex items-center">
+                    <span className="mr-2 inline-block h-4 w-4 rounded-full border-2 border-primary border-r-transparent animate-spin"></span>
+                    Pipeline status: {runStatus || "Starting pipeline..."}
+                  </p>
+                  {runLogs.length > 0 && (
+                    <div className="mt-2 text-xs">
+                      <p className="font-medium">Recent logs:</p>
+                      <div className="bg-black/5 dark:bg-white/5 p-2 rounded-md max-h-20 overflow-y-auto">
+                        {runLogs.slice(-3).map((log, index) => (
+                          <div key={index} className="text-xs">{log}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : error ? (
                 <div className="text-red-500">
                   <p>Error: {error}</p>
                 </div>
               ) : (
-                <pre className="text-xs text-left p-3 bg-black/5 dark:bg-white/5 rounded-md overflow-auto max-h-60">
-                  {JSON.stringify(gumloopResponse, null, 2)}
-                </pre>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>Pipeline ID: {gumloopRunId || "N/A"}</span>
+                    <span>Status: {runStatus || "N/A"}</span>
+                  </div>
+                  <pre className="text-xs text-left p-3 bg-black/5 dark:bg-white/5 rounded-md overflow-auto max-h-60">
+                    {JSON.stringify(gumloopResponse, null, 2)}
+                  </pre>
+                  {gumloopResponse?.outputs && Object.keys(gumloopResponse.outputs).length > 0 && (
+                    <div className="mt-2 p-3 bg-primary/10 rounded-md">
+                      <p className="text-sm font-medium">Pipeline Outputs:</p>
+                      <pre className="text-xs mt-1">
+                        {JSON.stringify(gumloopResponse.outputs, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             

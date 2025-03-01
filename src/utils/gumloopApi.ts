@@ -39,6 +39,80 @@ export const fetchGumloopOutputs = async (
 };
 
 /**
+ * Start a Gumloop pipeline
+ * 
+ * @param userId - Gumloop user ID
+ * @param savedItemId - Gumloop saved item ID (workbook ID)
+ * @param apiKey - Gumloop API key
+ * @param inputs - Input parameters for the pipeline
+ * @returns Promise with the pipeline run information
+ */
+export const startGumloopPipeline = async (
+  userId: string,
+  savedItemId: string,
+  apiKey: string,
+  inputs: Array<{input_name: string, value: any}>
+) => {
+  try {
+    const response = await fetch('https://api.gumloop.com/api/v1/start_pipeline', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        saved_item_id: savedItemId,
+        pipeline_inputs: inputs
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Gumloop API error: ${response.status} ${errorData.message || response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to start Gumloop pipeline:", error);
+    throw error;
+  }
+};
+
+/**
+ * Poll for Gumloop pipeline run status and results
+ * 
+ * @param runId - The ID of the pipeline run
+ * @param userId - Gumloop user ID
+ * @param apiKey - Gumloop API key
+ * @returns Promise with the run status and outputs
+ */
+export const getPipelineRunStatus = async (
+  runId: string,
+  userId: string,
+  apiKey: string
+) => {
+  try {
+    const response = await fetch(`https://api.gumloop.com/api/v1/get_pl_run?run_id=${runId}&user_id=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Gumloop API error: ${response.status} ${errorData.message || response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to get pipeline run status:", error);
+    throw error;
+  }
+};
+
+/**
  * Transform Gumloop API results into itinerary data
  * This is a helper function to map API results to your application's data structure
  */
