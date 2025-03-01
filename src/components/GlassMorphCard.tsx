@@ -1,17 +1,21 @@
 
-import { ReactNode } from "react";
+import { ReactNode, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 interface GlassMorphCardProps {
   children: ReactNode;
   className?: string;
   hoverEffect?: boolean;
+  onClick?: () => void;
+  style?: CSSProperties;
 }
 
 const GlassMorphCard = ({ 
   children, 
   className, 
-  hoverEffect = false 
+  hoverEffect = false,
+  onClick,
+  style
 }: GlassMorphCardProps) => {
   return (
     <div
@@ -20,6 +24,8 @@ const GlassMorphCard = ({
         hoverEffect && "hover:shadow-md hover:translate-y-[-2px]",
         className
       )}
+      onClick={onClick}
+      style={style}
     >
       {children}
     </div>
