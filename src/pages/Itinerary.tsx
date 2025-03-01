@@ -1,13 +1,14 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import ItineraryCard from "@/components/ItineraryCard";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Clock, BadgeDollarSign, Users, Heart, Share, Download, Printer } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, BadgeDollarSign, Users, Heart, Share, Download, Printer, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
+import { toast } from "sonner";
 
 interface TripDetails {
   destination: string;
@@ -19,6 +20,10 @@ interface TripDetails {
   interests: string[];
 }
 
+const GUMLOOP_USER_ID = "1y5cS7wht6QDSjLHGBJOi6vu19y1";
+const GUMLOOP_SAVED_ITEM_ID = "mqWGGXyZuhFwLQt5YDpyZC";
+const GUMLOOP_API_KEY = "4997b5ac80a9402d977502ac41891eec";
+
 const Itinerary = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -26,21 +31,125 @@ const Itinerary = () => {
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
+  const [sights, setSights] = useState<string[]>([]);
+  const [isApiLoading, setIsApiLoading] = useState(false);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [runStatus, setRunStatus] = useState<string | null>(null);
+  const [runLogs, setRunLogs] = useState<string[]>([]);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (location.state?.tripDetails) {
       setTripDetails(location.state.tripDetails);
       
-      // Simulate itinerary data loading
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1500);
+      // Simulate itinerary data loading and fetch sights
+      fetchSightsFromGumloop(location.state?.tripDetails?.destination);
     } else {
       navigate("/plan");
     }
   }, [location, navigate]);
 
-  // Mock itinerary data
+  const startTimer = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+    
+    setElapsedTime(0);
+    timerIntervalRef.current = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+  };
+
+  const stopTimer = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  };
+
+  // Format time as mm:ss
+  const formatElapsedTime = () => {
+    const minutes = Math.floor(elapsedTime / 60);
+    const seconds = elapsedTime % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Fetch sights from Gumloop API
+  const fetchSightsFromGumloop = async (destination: string) => {
+    if (!destination) return;
+    
+    setIsApiLoading(true);
+    startTimer();
+    
+    try {
+      const city = destination.split(',')[0];
+      // Start the pipeline
+      const response = await startGumloopPipeline(
+        GUMLOOP_USER_ID,
+        GUMLOOP_SAVED_ITEM_ID,
+        GUMLOOP_API_KEY,
+        [{ input_name: "city", value: city }]
+      );
+      
+      setRunId(response.run_id);
+      
+      // Poll for results
+      if (response.run_id) {
+        pollRunStatus(response.run_id);
+      }
+    } catch (error) {
+      console.error("Error starting Gumloop pipeline:", error);
+      toast.error("Failed to fetch sights data");
+      setIsLoading(false);
+      setIsApiLoading(false);
+      stopTimer();
+    }
+  };
+  
+  // Poll run status
+  const pollRunStatus = async (runId: string) => {
+    try {
+      const statusResponse = await getPipelineRunStatus(
+        runId,
+        GUMLOOP_USER_ID, 
+        GUMLOOP_API_KEY
+      );
+      
+      setRunStatus(statusResponse.state);
+      
+      // Extract logs
+      if (statusResponse.log && statusResponse.log.length > 0) {
+        setRunLogs(statusResponse.log);
+      }
+      
+      // If completed, extract sights from output
+      if (statusResponse.state === "DONE") {
+        if (statusResponse.outputs && statusResponse.outputs.sights) {
+          setSights(statusResponse.outputs.sights);
+        }
+        setIsLoading(false);
+        setIsApiLoading(false);
+        stopTimer();
+      } else if (statusResponse.state === "FAILED" || statusResponse.state === "TERMINATED") {
+        toast.error(`Pipeline ${statusResponse.state.toLowerCase()}`);
+        setIsLoading(false);
+        setIsApiLoading(false);
+        stopTimer();
+      } else {
+        // Continue polling
+        setTimeout(() => pollRunStatus(runId), 3000);
+      }
+    } catch (error) {
+      console.error("Error polling run status:", error);
+      toast.error("Failed to get pipeline status");
+      setIsLoading(false);
+      setIsApiLoading(false);
+      stopTimer();
+    }
+  };
+
+  // Mock itinerary data with real sights integrated
   const generateMockItinerary = () => {
     if (!tripDetails) return [];
     
@@ -54,12 +163,15 @@ const Itinerary = () => {
       "https://images.unsplash.com/photo-1507369632363-a0b8cfbfb290?auto=format&fit=crop&w=800&q=80"
     ];
     
-    const activities = [
-      "Museum Visit", "Historical Tour", "Local Food Tasting", 
-      "City Walking Tour", "Shopping Trip", "Cultural Experience",
-      "Beach Day", "Nature Hike", "Boat Tour", "Wine Tasting",
-      "Art Gallery", "Local Market", "Scenic Viewpoint", "Landmark Visit"
-    ];
+    // Use the real sights from Gumloop API if available, otherwise use fallback activities
+    const activities = sights.length > 0 
+      ? sights 
+      : [
+          "Museum Visit", "Historical Tour", "Local Food Tasting", 
+          "City Walking Tour", "Shopping Trip", "Cultural Experience",
+          "Beach Day", "Nature Hike", "Boat Tour", "Wine Tasting",
+          "Art Gallery", "Local Market", "Scenic Viewpoint", "Landmark Visit"
+        ];
     
     const itinerary = [];
     const city = tripDetails.destination.split(",")[0];
@@ -69,14 +181,16 @@ const Itinerary = () => {
       const numActivities = Math.floor(Math.random() * 3) + 2; // 2-4 activities per day
       
       for (let j = 0; j < numActivities; j++) {
-        const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+        // Use an activity from our list, cycling through them
+        const activityIndex = (i + j) % activities.length;
+        const randomActivity = activities[activityIndex];
         const randomImage = images[Math.floor(Math.random() * images.length)];
         const startHour = 8 + j * 3; // Space activities throughout the day
         
         dayActivities.push({
           title: randomActivity,
-          description: `Experience the amazing ${randomActivity.toLowerCase()} in ${city}. This is one of the must-do activities during your stay.`,
-          location: `${city} ${randomActivity} Center`,
+          description: `Experience ${randomActivity} in ${city}. This is one of the must-do activities during your stay.`,
+          location: `${city} ${randomActivity}`,
           time: `${startHour}:00 - ${startHour + 2}:00`,
           cost: `$${Math.floor(Math.random() * 50) + 20}`,
           image: randomImage
@@ -113,9 +227,31 @@ const Itinerary = () => {
               <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
             </div>
             <h2 className="text-2xl font-bold mb-2">Generating Your Perfect Itinerary</h2>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-6">
               Our AI is crafting a personalized travel plan for your trip to {tripDetails?.destination}
             </p>
+            
+            {isApiLoading && (
+              <div className="w-full max-w-md mx-auto">
+                <div className="flex items-center gap-2 mb-2 justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-sm font-medium">
+                    Processing {runStatus && `(${runStatus})`} - {formatElapsedTime()}
+                  </span>
+                </div>
+                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                  <div className="h-full bg-primary animate-progress"></div>
+                </div>
+                {runLogs && runLogs.length > 0 && (
+                  <div className="mt-4 text-left bg-secondary/20 p-3 rounded-md text-xs max-h-40 overflow-y-auto">
+                    <p className="font-medium mb-1">Recent logs:</p>
+                    {runLogs.slice(-5).map((log, i) => (
+                      <div key={i} className="mb-1 text-muted-foreground">{log}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -202,7 +338,35 @@ const Itinerary = () => {
           <TabsContent value="overview" className="animate-fade-in">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="md:col-span-2">
-                <h2 className="text-2xl font-bold mb-6">Trip Highlights</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold">Trip Highlights</h2>
+                  {sights.length > 0 && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                      {sights.length} attractions found
+                    </span>
+                  )}
+                </div>
+                
+                {sights.length === 0 && isApiLoading && (
+                  <div className="flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg p-8 mb-6">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Finding the best attractions for you...</h3>
+                    <p className="text-sm text-muted-foreground mb-3 text-center">
+                      We're searching for the best attractions in {tripDetails.destination.split(',')[0]}
+                    </p>
+                    <div className="w-full max-w-md">
+                      <div className="flex items-center gap-2 mb-2 justify-center">
+                        <span className="text-sm font-medium">
+                          {runStatus && `${runStatus}`} - {formatElapsedTime()}
+                        </span>
+                      </div>
+                      <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                        <div className="h-full bg-primary animate-progress"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {mockItinerary.flatMap(day => 
                     day.activities.slice(0, 1).map((activity, i) => (
@@ -274,6 +438,22 @@ const Itinerary = () => {
                     )}
                   </div>
                 </GlassMorphCard>
+                
+                {sights.length > 0 && (
+                  <GlassMorphCard>
+                    <h3 className="text-lg font-semibold mb-4">Popular Attractions</h3>
+                    <ul className="space-y-2">
+                      {sights.map((sight, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
+                            {index + 1}
+                          </span>
+                          <span>{sight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </GlassMorphCard>
+                )}
                 
                 <GlassMorphCard>
                   <h3 className="text-lg font-semibold mb-4">Estimated Costs</h3>

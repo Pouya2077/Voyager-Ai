@@ -1,5 +1,5 @@
 
-import { CalendarClock, MapPin, BadgeDollarSign, Users } from "lucide-react";
+import { CalendarClock, MapPin, BadgeDollarSign } from "lucide-react";
 import GlassMorphCard from "./GlassMorphCard";
 
 interface ItineraryCardProps {
