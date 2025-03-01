@@ -23,6 +23,43 @@ const ItineraryCard = ({
   image,
   onClick
 }: ItineraryCardProps) => {
+  // Helper function to display external links in description
+  const renderDescription = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const hasUrl = urlRegex.test(text);
+    
+    if (hasUrl) {
+      const parts = text.split(urlRegex);
+      const matches = text.match(urlRegex) || [];
+      
+      return (
+        <>
+          {parts.map((part, i) => {
+            if (i < matches.length) {
+              return (
+                <React.Fragment key={i}>
+                  {part}
+                  <a 
+                    href={matches[i]} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {matches[i]}
+                  </a>
+                </React.Fragment>
+              );
+            }
+            return part;
+          })}
+        </>
+      );
+    }
+    
+    return text;
+  };
+
   return (
     <GlassMorphCard
       className="group cursor-pointer h-full"
@@ -63,7 +100,7 @@ const ItineraryCard = ({
         </div>
         
         <p className="text-sm text-muted-foreground line-clamp-3 mb-4 flex-grow">
-          {description}
+          {renderDescription(description)}
         </p>
         
         <div className="mt-auto pt-3 border-t border-border">

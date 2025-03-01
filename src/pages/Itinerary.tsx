@@ -132,17 +132,23 @@ const Itinerary = () => {
       
       if (statusResponse.state === "DONE") {
         if (statusResponse.outputs) {
+          console.log("API outputs:", statusResponse.outputs);
+          
           if (statusResponse.outputs.sights) {
             setSights(statusResponse.outputs.sights);
           }
           if (statusResponse.outputs.flights) {
-            setFlights(statusResponse.outputs.flights);
+            setFlights(Array.isArray(statusResponse.outputs.flights) ? 
+              statusResponse.outputs.flights : 
+              [statusResponse.outputs.flights]);
           }
           if (statusResponse.outputs.activities) {
             setActivities(statusResponse.outputs.activities);
           }
           if (statusResponse.outputs.accommodations) {
-            setAccommodations(statusResponse.outputs.accommodations);
+            setAccommodations(Array.isArray(statusResponse.outputs.accommodations) ? 
+              statusResponse.outputs.accommodations : 
+              [statusResponse.outputs.accommodations]);
           }
         }
         setIsLoading(false);
@@ -272,6 +278,8 @@ const Itinerary = () => {
   }
 
   const renderLink = (text: string) => {
+    if (!text) return '';
+    
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const hasUrl = urlRegex.test(text);
     
@@ -290,7 +298,7 @@ const Itinerary = () => {
                     href={matches[i]} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline"
+                    className="text-primary hover:underline break-all"
                   >
                     {matches[i]}
                   </a>
@@ -445,7 +453,7 @@ const Itinerary = () => {
                     )}
                   </div>
                   
-                  {flights.length > 0 ? (
+                  {flights && flights.length > 0 ? (
                     <GlassMorphCard>
                       <ul className="space-y-3">
                         {flights.map((flight, index) => (
@@ -484,7 +492,7 @@ const Itinerary = () => {
                     )}
                   </div>
                   
-                  {accommodations.length > 0 ? (
+                  {accommodations && accommodations.length > 0 ? (
                     <GlassMorphCard>
                       <ul className="space-y-3">
                         {accommodations.map((accommodation, index) => (
