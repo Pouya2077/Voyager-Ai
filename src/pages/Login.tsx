@@ -30,6 +30,9 @@ const Login = () => {
   };
 
   const handleSkip = () => {
+    // Set login state to true even when skipping
+    localStorage.setItem("isLoggedIn", "true");
+    // Navigate to home page
     navigate("/");
   };
 
