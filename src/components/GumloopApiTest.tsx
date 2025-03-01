@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { fetchGumloopOutputs, startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
 import { Button } from "@/components/ui/button";
@@ -6,34 +7,17 @@ import { Label } from "@/components/ui/label";
 import GlassMorphCard from "./GlassMorphCard";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { format } from "date-fns";
 
 interface GumloopApiTestProps {
   className?: string;
-  city?: string;
-  autoStart?: boolean;
-  tripDetails?: {
-    destination: string;
-    startDate: Date;
-    endDate: Date;
-    duration: number;
-    budget: number;
-    travelers: number;
-    interests: string[];
-  };
-  onResultsReceived?: (results: any) => void;
+  city?: string; // Added city prop
+  autoStart?: boolean; // Added to allow automatic API call startup
 }
 
-const GumloopApiTest = ({ 
-  className, 
-  city = "Paris", 
-  autoStart = false, 
-  tripDetails,
-  onResultsReceived 
-}: GumloopApiTestProps) => {
-  const [workbookId, setWorkbookId] = useState("veV5ZPJy5nYw4pQGdceWD5");
-  const [userId, setUserId] = useState("1y5cS7wht6QDSjLHGBJOi6vu19y1");
-  const [apiKey, setApiKey] = useState("4997b5ac80a9402d977502ac41891eec");
+const GumloopApiTest = ({ className, city = "Paris", autoStart = false }: GumloopApiTestProps) => {
+  const [workbookId, setWorkbookId] = useState("mqWGGXyZuhFwLQt5YDpyZC"); // Default workbook ID
+  const [userId, setUserId] = useState("1y5cS7wht6QDSjLHGBJOi6vu19y1"); // Default user ID
+  const [apiKey, setApiKey] = useState("4997b5ac80a9402d977502ac41891eec"); // Default API key
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [runId, setRunId] = useState("");
@@ -43,14 +27,16 @@ const GumloopApiTest = ({
   const [timerInterval, setTimerInterval] = useState<number | null>(null);
   
   useEffect(() => {
-    if (autoStart && (city || tripDetails)) {
+    // If autoStart is true, automatically start the API call
+    if (autoStart) {
       handleTestApi();
     }
     
     return () => {
+      // Clear the timer on component unmount
       if (timerInterval) clearInterval(timerInterval);
     };
-  }, [autoStart, city, tripDetails]);
+  }, [autoStart, city]);
 
   const startTimer = () => {
     setElapsedTime(0);
@@ -83,52 +69,14 @@ const GumloopApiTest = ({
     const timerInt = startTimer();
     
     try {
-      const pipelineInputs = [];
+      console.log(`Starting Gumloop pipeline with city: ${city}`);
       
-      if (tripDetails) {
-        const startDateStr = format(tripDetails.startDate, "MMMM do");
-        const endDateStr = format(tripDetails.endDate, "MMMM do");
-        
-        pipelineInputs.push({ 
-          input_name: "destination", 
-          value: tripDetails.destination.split(',')[0]
-        });
-        
-        pipelineInputs.push({ 
-          input_name: "budget", 
-          value: tripDetails.budget.toString() 
-        });
-        
-        pipelineInputs.push({ 
-          input_name: "interest", 
-          value: tripDetails.interests.length > 0 ? tripDetails.interests.join(", ") : "anything" 
-        });
-        
-        pipelineInputs.push({ 
-          input_name: "num_travelers", 
-          value: tripDetails.travelers.toString() 
-        });
-        
-        pipelineInputs.push({ input_name: "start_date", value: startDateStr });
-        pipelineInputs.push({ input_name: "end_date", value: endDateStr });
-        
-        console.log(`Starting Gumloop pipeline with complete trip details for ${tripDetails.destination}`);
-      } else {
-        pipelineInputs.push({ input_name: "destination", value: city });
-        pipelineInputs.push({ input_name: "budget", value: "1000" });
-        pipelineInputs.push({ input_name: "interest", value: "anything" });
-        pipelineInputs.push({ input_name: "num_travelers", value: "2" });
-        pipelineInputs.push({ input_name: "start_date", value: "Next week" });
-        pipelineInputs.push({ input_name: "end_date", value: "Two weeks from now" });
-        
-        console.log(`Starting Gumloop pipeline with basic details for city: ${city}`);
-      }
-      
+      // Start the pipeline with the city as input
       const pipelineResponse = await startGumloopPipeline(
         userId,
         workbookId,
         apiKey,
-        pipelineInputs
+        [{ input_name: "city", value: city }]
       );
       
       if (pipelineResponse && pipelineResponse.run_id) {
@@ -150,7 +98,7 @@ const GumloopApiTest = ({
       let isComplete = false;
       let attempts = 0;
       
-      while (!isComplete && attempts < 60) {
+      while (!isComplete && attempts < 60) { // Limit to 60 attempts (5 minutes with 5s interval)
         attempts++;
         
         const statusResponse = await getPipelineRunStatus(runId, userId, apiKey);
@@ -160,14 +108,10 @@ const GumloopApiTest = ({
           setRunLogs(statusResponse.log.filter((log: string) => !log.includes("__system__")));
         }
         
+        // Check if there are outputs or if the pipeline is done
         if (statusResponse.state === "COMPLETED" || statusResponse.state === "ERROR" || statusResponse.outputs) {
           isComplete = true;
           setResults(statusResponse);
-          
-          if (onResultsReceived && statusResponse.outputs) {
-            onResultsReceived(statusResponse);
-          }
-          
           if (statusResponse.state === "COMPLETED") {
             toast.success("Successfully fetched data from Gumloop!");
           } else if (statusResponse.state === "ERROR") {
@@ -176,6 +120,7 @@ const GumloopApiTest = ({
           stopTimer(timerInt);
           setLoading(false);
         } else {
+          // Wait before polling again
           await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
@@ -232,19 +177,7 @@ const GumloopApiTest = ({
           </>
         )}
         
-        {tripDetails ? (
-          <div className="text-sm text-muted-foreground">
-            <p>Destination: {tripDetails.destination}</p>
-            <p>Dates: {format(tripDetails.startDate, "MMM d")} - {format(tripDetails.endDate, "MMM d, yyyy")}</p>
-            <p>Budget: ${tripDetails.budget}</p>
-            <p>Travelers: {tripDetails.travelers}</p>
-            {tripDetails.interests.length > 0 && (
-              <p>Interests: {tripDetails.interests.join(", ")}</p>
-            )}
-          </div>
-        ) : city ? (
-          <p className="text-sm text-muted-foreground">Destination: {city}</p>
-        ) : null}
+        {city && <p className="text-sm text-muted-foreground">Destination: {city}</p>}
         
         {!autoStart && (
           <Button 
@@ -287,7 +220,7 @@ const GumloopApiTest = ({
         </div>
       )}
       
-      {results && !loading && !autoStart && (
+      {results && !loading && (
         <div className="mt-4">
           <h3 className="text-lg font-medium mb-2">Results:</h3>
           <pre className="bg-secondary/30 p-4 rounded-md overflow-auto max-h-[200px] text-xs">

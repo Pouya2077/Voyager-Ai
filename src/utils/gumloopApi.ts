@@ -127,10 +127,6 @@ export const transformGumloopToItinerary = (gumloopData: any) => {
       destination: outputs.destination || "",
       days: outputs.itinerary || [],
       summary: outputs.summary || "",
-      accommodations: outputs.accommodations || [],
-      flights: outputs.flights || [],
-      activities: outputs.activities || [],
-      sights: outputs.sights || [],
       // Add other fields as needed
     };
   } catch (error) {
@@ -138,4 +134,3 @@ export const transformGumloopToItinerary = (gumloopData: any) => {
     return null;
   }
 };
-

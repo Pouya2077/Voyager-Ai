@@ -5,15 +5,13 @@ import ItineraryCard from "@/components/ItineraryCard";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Clock, BadgeDollarSign, Users, Heart, Share, Download, Printer, Loader2, Hotel, Plane, Utensils, MapPinned, Car } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, BadgeDollarSign, Users, Heart, Share, Download, Printer, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
 import { toast } from "sonner";
-import GumloopApiTest from "@/components/GumloopApiTest";
 
 interface TripDetails {
   destination: string;
-  city?: string;
   startDate: Date;
   endDate: Date;
   duration: number;
@@ -21,6 +19,10 @@ interface TripDetails {
   travelers: number;
   interests: string[];
 }
+
+const GUMLOOP_USER_ID = "1y5cS7wht6QDSjLHGBJOi6vu19y1";
+const GUMLOOP_SAVED_ITEM_ID = "mqWGGXyZuhFwLQt5YDpyZC";
+const GUMLOOP_API_KEY = "4997b5ac80a9402d977502ac41891eec";
 
 const Itinerary = () => {
   const location = useLocation();
@@ -30,10 +32,6 @@ const Itinerary = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [sights, setSights] = useState<string[]>([]);
-  const [accommodations, setAccommodations] = useState<any[]>([]);
-  const [flights, setFlights] = useState<any[]>([]);
-  const [activities, setActivities] = useState<any[]>([]);
-  const [apiResults, setApiResults] = useState<any>(null);
   const [isApiLoading, setIsApiLoading] = useState(false);
   const [runId, setRunId] = useState<string | null>(null);
   const [runStatus, setRunStatus] = useState<string | null>(null);
@@ -44,6 +42,9 @@ const Itinerary = () => {
   useEffect(() => {
     if (location.state?.tripDetails) {
       setTripDetails(location.state.tripDetails);
+      
+      // Simulate itinerary data loading and fetch sights
+      fetchSightsFromGumloop(location.state?.tripDetails?.destination);
     } else {
       navigate("/plan");
     }
@@ -74,72 +75,82 @@ const Itinerary = () => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Process API results when they become available
-  const processApiResults = (results: any) => {
-    if (!results || !results.outputs) return;
-
-    console.log("Processing API results:", results);
-    setApiResults(results);
+  // Fetch sights from Gumloop API
+  const fetchSightsFromGumloop = async (destination: string) => {
+    if (!destination) return;
     
-    const outputs = results.outputs;
+    setIsApiLoading(true);
+    startTimer();
     
-    // Extract sights data
-    if (outputs.sights && Array.isArray(outputs.sights)) {
-      setSights(outputs.sights);
-    }
-    
-    // Extract accommodation recommendations
-    if (outputs.accommodations && Array.isArray(outputs.accommodations)) {
-      setAccommodations(outputs.accommodations);
-    } else if (typeof outputs.accommodations === 'string') {
-      try {
-        // Try to parse if it's a JSON string
-        const parsedAccommodations = JSON.parse(outputs.accommodations);
-        if (Array.isArray(parsedAccommodations)) {
-          setAccommodations(parsedAccommodations);
-        }
-      } catch (error) {
-        // If it's not valid JSON, split by newlines or other delimiter
-        const accommodationsArr = outputs.accommodations.split(/\n|,/).filter(Boolean).map(item => item.trim());
-        setAccommodations(accommodationsArr.map(name => ({ name })));
+    try {
+      const city = destination.split(',')[0];
+      // Start the pipeline
+      const response = await startGumloopPipeline(
+        GUMLOOP_USER_ID,
+        GUMLOOP_SAVED_ITEM_ID,
+        GUMLOOP_API_KEY,
+        [{ input_name: "city", value: city }]
+      );
+      
+      setRunId(response.run_id);
+      
+      // Poll for results
+      if (response.run_id) {
+        pollRunStatus(response.run_id);
       }
+    } catch (error) {
+      console.error("Error starting Gumloop pipeline:", error);
+      toast.error("Failed to fetch sights data");
+      setIsLoading(false);
+      setIsApiLoading(false);
+      stopTimer();
     }
-    
-    // Extract flight recommendations
-    if (outputs.flights && Array.isArray(outputs.flights)) {
-      setFlights(outputs.flights);
-    } else if (typeof outputs.flights === 'string') {
-      try {
-        const parsedFlights = JSON.parse(outputs.flights);
-        if (Array.isArray(parsedFlights)) {
-          setFlights(parsedFlights);
-        }
-      } catch (error) {
-        const flightsArr = outputs.flights.split(/\n|,/).filter(Boolean).map(item => item.trim());
-        setFlights(flightsArr.map(name => ({ name })));
+  };
+  
+  // Poll run status
+  const pollRunStatus = async (runId: string) => {
+    try {
+      const statusResponse = await getPipelineRunStatus(
+        runId,
+        GUMLOOP_USER_ID, 
+        GUMLOOP_API_KEY
+      );
+      
+      setRunStatus(statusResponse.state);
+      
+      // Extract logs
+      if (statusResponse.log && statusResponse.log.length > 0) {
+        setRunLogs(statusResponse.log);
       }
-    }
-    
-    // Extract activities
-    if (outputs.activities && Array.isArray(outputs.activities)) {
-      setActivities(outputs.activities);
-    } else if (typeof outputs.activities === 'string') {
-      try {
-        const parsedActivities = JSON.parse(outputs.activities);
-        if (Array.isArray(parsedActivities)) {
-          setActivities(parsedActivities);
+      
+      // If completed, extract sights from output
+      if (statusResponse.state === "DONE") {
+        if (statusResponse.outputs && statusResponse.outputs.sights) {
+          setSights(statusResponse.outputs.sights);
         }
-      } catch (error) {
-        const activitiesArr = outputs.activities.split(/\n|,/).filter(Boolean).map(item => item.trim());
-        setActivities(activitiesArr.map(name => ({ name })));
+        setIsLoading(false);
+        setIsApiLoading(false);
+        stopTimer();
+      } else if (statusResponse.state === "FAILED" || statusResponse.state === "TERMINATED") {
+        toast.error(`Pipeline ${statusResponse.state.toLowerCase()}`);
+        setIsLoading(false);
+        setIsApiLoading(false);
+        stopTimer();
+      } else {
+        // Continue polling
+        setTimeout(() => pollRunStatus(runId), 3000);
       }
+    } catch (error) {
+      console.error("Error polling run status:", error);
+      toast.error("Failed to get pipeline status");
+      setIsLoading(false);
+      setIsApiLoading(false);
+      stopTimer();
     }
-    
-    setIsLoading(false);
   };
 
   // Mock itinerary data with real sights integrated
-  const generateItinerary = () => {
+  const generateMockItinerary = () => {
     if (!tripDetails) return [];
     
     const images = [
@@ -152,40 +163,38 @@ const Itinerary = () => {
       "https://images.unsplash.com/photo-1507369632363-a0b8cfbfb290?auto=format&fit=crop&w=800&q=80"
     ];
     
-    // Use real attractions or activities if available
-    const attractionsToUse = sights.length > 0 ? 
-      sights : 
-      (activities.length > 0 ? 
-        activities.map(a => typeof a === 'string' ? a : a.name || a.title) : 
-        ["Museum Visit", "Historical Tour", "Local Food Tasting"]);
+    // Use the real sights from Gumloop API if available, otherwise use fallback activities
+    const activities = sights.length > 0 
+      ? sights 
+      : [
+          "Museum Visit", "Historical Tour", "Local Food Tasting", 
+          "City Walking Tour", "Shopping Trip", "Cultural Experience",
+          "Beach Day", "Nature Hike", "Boat Tour", "Wine Tasting",
+          "Art Gallery", "Local Market", "Scenic Viewpoint", "Landmark Visit"
+        ];
     
     const itinerary = [];
     const city = tripDetails.destination.split(",")[0];
     
     for (let i = 1; i <= tripDetails.duration; i++) {
       const dayActivities = [];
-      // Determine how many activities to show per day - at least 2, and distribute all attractions across the days
-      const numActivities = Math.max(2, Math.ceil(attractionsToUse.length / tripDetails.duration));
+      const numActivities = Math.floor(Math.random() * 3) + 2; // 2-4 activities per day
       
       for (let j = 0; j < numActivities; j++) {
-        // Select activities in sequence from the available ones, cycling if necessary
-        const activityIndex = (i - 1) * numActivities + j;
-        const wrappedIndex = activityIndex % attractionsToUse.length;
-        const activityName = attractionsToUse[wrappedIndex];
+        // Use an activity from our list, cycling through them
+        const activityIndex = (i + j) % activities.length;
+        const randomActivity = activities[activityIndex];
+        const randomImage = images[Math.floor(Math.random() * images.length)];
+        const startHour = 8 + j * 3; // Space activities throughout the day
         
-        if (activityName) {
-          const randomImage = images[Math.floor(Math.random() * images.length)];
-          const startHour = 8 + j * 3; // Space activities throughout the day
-          
-          dayActivities.push({
-            title: activityName,
-            description: `Experience ${activityName} in ${city}. This is one of the must-do activities during your stay.`,
-            location: `${city}`,
-            time: `${startHour}:00 - ${startHour + 2}:00`,
-            cost: `$${Math.floor(Math.random() * 50) + 20}`,
-            image: randomImage
-          });
-        }
+        dayActivities.push({
+          title: randomActivity,
+          description: `Experience ${randomActivity} in ${city}. This is one of the must-do activities during your stay.`,
+          location: `${city} ${randomActivity}`,
+          time: `${startHour}:00 - ${startHour + 2}:00`,
+          cost: `$${Math.floor(Math.random() * 50) + 20}`,
+          image: randomImage
+        });
       }
       
       itinerary.push({
@@ -198,7 +207,7 @@ const Itinerary = () => {
     return itinerary;
   };
   
-  const itineraryData = generateItinerary();
+  const mockItinerary = generateMockItinerary();
 
   const handleBack = () => {
     navigate("/plan");
@@ -222,29 +231,27 @@ const Itinerary = () => {
               Our AI is crafting a personalized travel plan for your trip to {tripDetails?.destination}
             </p>
             
-            <div className="mt-8">
-              {/* Hidden component to handle API loading */}
-              <div className="hidden">
-                <GumloopApiTest 
-                  autoStart={true}
-                  tripDetails={tripDetails}
-                  onResultsReceived={processApiResults}
-                />
-              </div>
-              
-              {/* Instead show our own loading UI that hooks into the API results */}
+            {isApiLoading && (
               <div className="w-full max-w-md mx-auto">
                 <div className="flex items-center gap-2 mb-2 justify-center">
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   <span className="text-sm font-medium">
-                    Processing your travel data - {formatElapsedTime()}
+                    Processing {runStatus && `(${runStatus})`} - {formatElapsedTime()}
                   </span>
                 </div>
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                   <div className="h-full bg-primary animate-progress"></div>
                 </div>
+                {runLogs && runLogs.length > 0 && (
+                  <div className="mt-4 text-left bg-secondary/20 p-3 rounded-md text-xs max-h-40 overflow-y-auto">
+                    <p className="font-medium mb-1">Recent logs:</p>
+                    {runLogs.slice(-5).map((log, i) => (
+                      <div key={i} className="mb-1 text-muted-foreground">{log}</div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -316,25 +323,15 @@ const Itinerary = () => {
           </div>
         </div>
         
-        <div className="mb-8 hidden">
-          <GumloopApiTest 
-            autoStart={true}
-            tripDetails={tripDetails}
-            onResultsReceived={processApiResults}
-          />
-        </div>
-        
         <Tabs defaultValue="overview" value={activeDay} onValueChange={setActiveDay} className="w-full">
           <div className="mb-8 overflow-x-auto pb-2">
             <TabsList className="inline-flex min-w-max">
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              {itineraryData.map((day) => (
+              {mockItinerary.map((day) => (
                 <TabsTrigger key={day.day} value={`day-${day.day}`}>
                   Day {day.day}
                 </TabsTrigger>
               ))}
-              <TabsTrigger value="flights">Flights</TabsTrigger>
-              <TabsTrigger value="accommodations">Accommodations</TabsTrigger>
             </TabsList>
           </div>
           
@@ -350,8 +347,28 @@ const Itinerary = () => {
                   )}
                 </div>
                 
+                {sights.length === 0 && isApiLoading && (
+                  <div className="flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg p-8 mb-6">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Finding the best attractions for you...</h3>
+                    <p className="text-sm text-muted-foreground mb-3 text-center">
+                      We're searching for the best attractions in {tripDetails.destination.split(',')[0]}
+                    </p>
+                    <div className="w-full max-w-md">
+                      <div className="flex items-center gap-2 mb-2 justify-center">
+                        <span className="text-sm font-medium">
+                          {runStatus && `${runStatus}`} - {formatElapsedTime()}
+                        </span>
+                      </div>
+                      <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                        <div className="h-full bg-primary animate-progress"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {itineraryData.flatMap(day => 
+                  {mockItinerary.flatMap(day => 
                     day.activities.slice(0, 1).map((activity, i) => (
                       <ItineraryCard
                         key={`${day.day}-${i}`}
@@ -473,7 +490,7 @@ const Itinerary = () => {
             </div>
           </TabsContent>
           
-          {itineraryData.map((day) => (
+          {mockItinerary.map((day) => (
             <TabsContent key={day.day} value={`day-${day.day}`} className="animate-fade-in">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2">
@@ -590,128 +607,6 @@ const Itinerary = () => {
               </div>
             </TabsContent>
           ))}
-          
-          {/* Accommodations Tab */}
-          <TabsContent value="accommodations" className="animate-fade-in">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold mb-4">Recommended Accommodations</h2>
-              
-              {accommodations.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {accommodations.map((accommodation, index) => {
-                    const name = typeof accommodation === 'string' ? accommodation : accommodation.name || accommodation.title || 'Accommodation Option';
-                    const description = accommodation.description || `A fantastic accommodation option in ${tripDetails.destination.split(',')[0]}.`;
-                    const price = accommodation.price || `$${Math.floor(Math.random() * 200) + 100}/night`;
-                    
-                    return (
-                      <GlassMorphCard key={index} className="h-full flex flex-col">
-                        <div className="aspect-video rounded-lg overflow-hidden mb-4">
-                          <img
-                            src={`https://images.unsplash.com/photo-${1500000000000 + index * 100000}?auto=format&fit=crop&w=800&q=80`}
-                            alt={name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        
-                        <h3 className="text-xl font-semibold mb-2">{name}</h3>
-                        
-                        <div className="flex items-center text-sm text-muted-foreground mb-3">
-                          <Hotel className="h-4 w-4 mr-1 text-primary" />
-                          <span className="mr-3">Hotel</span>
-                          <MapPin className="h-4 w-4 mr-1 text-primary" />
-                          <span>{tripDetails.destination.split(',')[0]}</span>
-                        </div>
-                        
-                        <p className="text-muted-foreground mb-4 flex-grow">
-                          {description}
-                        </p>
-                        
-                        <div className="flex justify-between items-center pt-3 mt-auto border-t border-border">
-                          <span className="font-medium text-lg">{price}</span>
-                          <Button size="sm">View Details</Button>
-                        </div>
-                      </GlassMorphCard>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center p-8 bg-muted/30 rounded-lg">
-                  <Hotel className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Accommodations Available Yet</h3>
-                  <p className="text-muted-foreground">
-                    We're still searching for the perfect places for you to stay in {tripDetails.destination.split(',')[0]}.
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          {/* Flights Tab */}
-          <TabsContent value="flights" className="animate-fade-in">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold mb-4">Recommended Flights</h2>
-              
-              {flights.length > 0 ? (
-                <div className="space-y-4">
-                  {flights.map((flight, index) => {
-                    const airline = typeof flight === 'string' ? flight.split(' ')[0] || 'Airline' : flight.airline || 'Airline';
-                    const flightNumber = typeof flight === 'string' ? flight.split(' ')[1] || 'FL123' : flight.flightNumber || 'FL123';
-                    const departure = flight.departure || '10:00 AM';
-                    const arrival = flight.arrival || '2:00 PM';
-                    const price = flight.price || `$${Math.floor(Math.random() * 500) + 300}`;
-                    
-                    return (
-                      <GlassMorphCard key={index} className="overflow-hidden">
-                        <div className="flex flex-col md:flex-row md:items-center">
-                          <div className="md:w-1/4 p-4 bg-primary/5 flex items-center md:h-full">
-                            <Plane className="h-8 w-8 text-primary mr-3" />
-                            <div>
-                              <div className="font-semibold">{airline}</div>
-                              <div className="text-sm text-muted-foreground">{flightNumber}</div>
-                            </div>
-                          </div>
-                          
-                          <div className="md:w-1/2 p-4 flex items-center justify-between">
-                            <div className="text-center">
-                              <div className="text-lg font-medium">{departure}</div>
-                              <div className="text-sm text-muted-foreground">Home</div>
-                            </div>
-                            
-                            <div className="flex-grow px-6 flex flex-col items-center">
-                              <div className="w-full h-0.5 bg-border relative">
-                                <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center">
-                                  <div className="h-2 w-2 rounded-full bg-primary"></div>
-                                </div>
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-1">Direct</div>
-                            </div>
-                            
-                            <div className="text-center">
-                              <div className="text-lg font-medium">{arrival}</div>
-                              <div className="text-sm text-muted-foreground">{tripDetails.destination.split(',')[0]}</div>
-                            </div>
-                          </div>
-                          
-                          <div className="md:w-1/4 p-4 border-t md:border-t-0 md:border-l border-border flex justify-between md:flex-col items-center">
-                            <div className="text-xl font-semibold">{price}</div>
-                            <Button size="sm">Select</Button>
-                          </div>
-                        </div>
-                      </GlassMorphCard>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center p-8 bg-muted/30 rounded-lg">
-                  <Plane className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Flight Information Available Yet</h3>
-                  <p className="text-muted-foreground">
-                    We're still searching for the best flights to {tripDetails.destination.split(',')[0]}.
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
     </div>
