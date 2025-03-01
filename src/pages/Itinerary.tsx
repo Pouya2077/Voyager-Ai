@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -79,6 +78,9 @@ const Itinerary = () => {
   const processApiResults = (results: any) => {
     if (!results || !results.outputs) return;
 
+    console.log("Processing API results:", results);
+    setApiResults(results);
+    
     const outputs = results.outputs;
     
     // Extract sights data
@@ -133,7 +135,6 @@ const Itinerary = () => {
       }
     }
     
-    setApiResults(results);
     setIsLoading(false);
   };
 
@@ -227,6 +228,7 @@ const Itinerary = () => {
                 <GumloopApiTest 
                   autoStart={true}
                   tripDetails={tripDetails}
+                  onResultsReceived={processApiResults}
                 />
               </div>
               
@@ -314,10 +316,11 @@ const Itinerary = () => {
           </div>
         </div>
         
-        <div className="mb-8">
+        <div className="mb-8 hidden">
           <GumloopApiTest 
             autoStart={true}
             tripDetails={tripDetails}
+            onResultsReceived={processApiResults}
           />
         </div>
         
