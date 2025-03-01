@@ -10,6 +10,7 @@ import TripPlanner from "./pages/TripPlanner";
 import Itinerary from "./pages/Itinerary";
 import NotFound from "./pages/NotFound";
 import AnimatedTransition from "./components/AnimatedTransition";
+import GumloopApiTest from "./components/GumloopApiTest";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,16 @@ const App = () => {
             <Route path="/itinerary" element={
               <AnimatedTransition>
                 <Itinerary />
+              </AnimatedTransition>
+            } />
+            <Route path="/gumloop-test" element={
+              <AnimatedTransition>
+                <div className="container mx-auto px-4 pt-32 pb-20">
+                  <h1 className="text-3xl font-bold mb-8 text-center">Gumloop API Integration Test</h1>
+                  <div className="max-w-md mx-auto">
+                    <GumloopApiTest />
+                  </div>
+                </div>
               </AnimatedTransition>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
