@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -5,7 +6,7 @@ import ItineraryCard from "@/components/ItineraryCard";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, MapPin, Clock, BadgeDollarSign, Users, Heart, Share, Download, Printer, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Clock, BadgeDollarSign, Users, Heart, Share, Download, Printer, Loader2, Plane, Hotel, Landmark } from "lucide-react";
 import { format } from "date-fns";
 import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ interface TripDetails {
 }
 
 const GUMLOOP_USER_ID = "1y5cS7wht6QDSjLHGBJOi6vu19y1";
-const GUMLOOP_SAVED_ITEM_ID = "mqWGGXyZuhFwLQt5YDpyZC";
+const GUMLOOP_SAVED_ITEM_ID = "veV5ZPJy5nYw4pQGdceWD5";
 const GUMLOOP_API_KEY = "4997b5ac80a9402d977502ac41891eec";
 
 const Itinerary = () => {
@@ -32,6 +33,9 @@ const Itinerary = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [sights, setSights] = useState<string[]>([]);
+  const [flights, setFlights] = useState<string[]>([]);
+  const [activities, setActivities] = useState<string[]>([]);
+  const [accommodations, setAccommodations] = useState<string[]>([]);
   const [isApiLoading, setIsApiLoading] = useState(false);
   const [runId, setRunId] = useState<string | null>(null);
   const [runStatus, setRunStatus] = useState<string | null>(null);
@@ -44,7 +48,7 @@ const Itinerary = () => {
       setTripDetails(location.state.tripDetails);
       
       // Simulate itinerary data loading and fetch sights
-      fetchSightsFromGumloop(location.state?.tripDetails?.destination);
+      fetchDataFromGumloop(location.state?.tripDetails?.destination);
     } else {
       navigate("/plan");
     }
@@ -75,8 +79,8 @@ const Itinerary = () => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Fetch sights from Gumloop API
-  const fetchSightsFromGumloop = async (destination: string) => {
+  // Fetch data from Gumloop API
+  const fetchDataFromGumloop = async (destination: string) => {
     if (!destination) return;
     
     setIsApiLoading(true);
@@ -84,12 +88,25 @@ const Itinerary = () => {
     
     try {
       const city = destination.split(',')[0];
+      // Format dates for the API
+      const formattedStartDate = tripDetails ? format(tripDetails.startDate, "MMMM do") : "";
+      const formattedEndDate = tripDetails ? format(tripDetails.endDate, "MMMM do") : "";
+      
+      // Create pipeline inputs
+      const pipelineInputs = [
+        { input_name: "destination", value: city },
+        { input_name: "budget", value: tripDetails ? tripDetails.budget.toString() : "1000" },
+        { input_name: "num_travelers", value: tripDetails ? tripDetails.travelers.toString() : "2" },
+        { input_name: "start_date", value: formattedStartDate },
+        { input_name: "end_date", value: formattedEndDate }
+      ];
+      
       // Start the pipeline
       const response = await startGumloopPipeline(
         GUMLOOP_USER_ID,
         GUMLOOP_SAVED_ITEM_ID,
         GUMLOOP_API_KEY,
-        [{ input_name: "city", value: city }]
+        pipelineInputs
       );
       
       setRunId(response.run_id);
@@ -100,7 +117,7 @@ const Itinerary = () => {
       }
     } catch (error) {
       console.error("Error starting Gumloop pipeline:", error);
-      toast.error("Failed to fetch sights data");
+      toast.error("Failed to fetch travel data");
       setIsLoading(false);
       setIsApiLoading(false);
       stopTimer();
@@ -123,10 +140,22 @@ const Itinerary = () => {
         setRunLogs(statusResponse.log);
       }
       
-      // If completed, extract sights from output
+      // If completed, extract data from output
       if (statusResponse.state === "DONE") {
-        if (statusResponse.outputs && statusResponse.outputs.sights) {
-          setSights(statusResponse.outputs.sights);
+        if (statusResponse.outputs) {
+          // Extract all available data from outputs
+          if (statusResponse.outputs.sights) {
+            setSights(statusResponse.outputs.sights);
+          }
+          if (statusResponse.outputs.flights) {
+            setFlights(statusResponse.outputs.flights);
+          }
+          if (statusResponse.outputs.activities) {
+            setActivities(statusResponse.outputs.activities);
+          }
+          if (statusResponse.outputs.accommodations) {
+            setAccommodations(statusResponse.outputs.accommodations);
+          }
         }
         setIsLoading(false);
         setIsApiLoading(false);
@@ -367,7 +396,7 @@ const Itinerary = () => {
                   </div>
                 )}
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
                   {mockItinerary.flatMap(day => 
                     day.activities.slice(0, 1).map((activity, i) => (
                       <ItineraryCard
@@ -382,6 +411,123 @@ const Itinerary = () => {
                         onClick={() => setActiveDay(`day-${day.day}`)}
                       />
                     ))
+                  )}
+                </div>
+                
+                {/* Flights Section */}
+                <div className="mb-10">
+                  <div className="flex items-center mb-4">
+                    <Plane className="mr-2 h-5 w-5 text-primary" />
+                    <h2 className="text-2xl font-bold">Flights</h2>
+                    {flights.length > 0 && (
+                      <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {flights.length} options
+                      </span>
+                    )}
+                  </div>
+                  
+                  {flights.length > 0 ? (
+                    <GlassMorphCard>
+                      <ul className="space-y-3">
+                        {flights.map((flight, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
+                              {index + 1}
+                            </span>
+                            <span>{flight}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </GlassMorphCard>
+                  ) : isApiLoading ? (
+                    <div className="flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg p-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                      <span className="text-sm text-muted-foreground">Searching for flight options...</span>
+                    </div>
+                  ) : (
+                    <GlassMorphCard>
+                      <p className="text-muted-foreground text-sm">
+                        No flight information available. Try customizing your travel dates or budget.
+                      </p>
+                    </GlassMorphCard>
+                  )}
+                </div>
+                
+                {/* Accommodations Section */}
+                <div className="mb-10">
+                  <div className="flex items-center mb-4">
+                    <Hotel className="mr-2 h-5 w-5 text-primary" />
+                    <h2 className="text-2xl font-bold">Accommodations</h2>
+                    {accommodations.length > 0 && (
+                      <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {accommodations.length} options
+                      </span>
+                    )}
+                  </div>
+                  
+                  {accommodations.length > 0 ? (
+                    <GlassMorphCard>
+                      <ul className="space-y-3">
+                        {accommodations.map((accommodation, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
+                              {index + 1}
+                            </span>
+                            <span>{accommodation}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </GlassMorphCard>
+                  ) : isApiLoading ? (
+                    <div className="flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg p-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                      <span className="text-sm text-muted-foreground">Finding accommodation options...</span>
+                    </div>
+                  ) : (
+                    <GlassMorphCard>
+                      <p className="text-muted-foreground text-sm">
+                        No accommodation information available. Try customizing your trip duration or budget.
+                      </p>
+                    </GlassMorphCard>
+                  )}
+                </div>
+                
+                {/* Activities Section */}
+                <div className="mb-6">
+                  <div className="flex items-center mb-4">
+                    <Landmark className="mr-2 h-5 w-5 text-primary" />
+                    <h2 className="text-2xl font-bold">Activities</h2>
+                    {activities.length > 0 && (
+                      <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {activities.length} options
+                      </span>
+                    )}
+                  </div>
+                  
+                  {activities.length > 0 ? (
+                    <GlassMorphCard>
+                      <ul className="space-y-3">
+                        {activities.map((activity, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="bg-primary/10 text-primary w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
+                              {index + 1}
+                            </span>
+                            <span>{activity}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </GlassMorphCard>
+                  ) : isApiLoading ? (
+                    <div className="flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg p-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                      <span className="text-sm text-muted-foreground">Discovering activities for your trip...</span>
+                    </div>
+                  ) : (
+                    <GlassMorphCard>
+                      <p className="text-muted-foreground text-sm">
+                        No activity information available. Try customizing your interests or location.
+                      </p>
+                    </GlassMorphCard>
                   )}
                 </div>
               </div>
