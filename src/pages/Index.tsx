@@ -1,9 +1,10 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
-import { ArrowRight, Globe, Map, Calendar, CreditCard, Compass, Sparkles, Loader2 } from "lucide-react";
+import { ArrowRight, Globe, Map, Calendar, CreditCard, Compass, Sparkles } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -149,61 +150,6 @@ const Index = () => {
               Your Personal AI Travel Companion for{" "}
               <span className="text-primary">Perfect Journeys</span>
             </h1>
-            
-            <div className="w-full max-w-lg mx-auto mb-8 p-4 border border-border rounded-lg bg-background/80 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold mb-2">Gumloop API Test Result:</h3>
-              {isLoading ? (
-                <div className="space-y-2">
-                  <p className="text-muted-foreground flex items-center">
-                    <span className="mr-2 inline-block h-4 w-4 rounded-full border-2 border-primary border-r-transparent animate-spin"></span>
-                    Pipeline status: {runStatus || "Starting pipeline..."}
-                  </p>
-                  {runLogs.length > 0 && (
-                    <div className="mt-2 text-xs">
-                      <p className="font-medium">Recent logs:</p>
-                      <div className="bg-black/5 dark:bg-white/5 p-2 rounded-md max-h-20 overflow-y-auto">
-                        {runLogs.slice(-3).map((log, index) => (
-                          <div key={index} className="text-xs">{log}</div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : error ? (
-                <div className="text-red-500">
-                  <p>Error: {error}</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-medium">
-                    <span>Pipeline ID: {gumloopRunId || "N/A"}</span>
-                    <span>Status: {runStatus || "N/A"}</span>
-                  </div>
-                  <pre className="text-xs text-left p-3 bg-black/5 dark:bg-white/5 rounded-md overflow-auto max-h-60">
-                    {JSON.stringify(gumloopResponse, null, 2)}
-                  </pre>
-                  {gumloopResponse?.outputs && Object.keys(gumloopResponse.outputs).length > 0 && (
-                    <div className="mt-2 p-3 bg-primary/10 rounded-md">
-                      <p className="text-sm font-medium">Pipeline Outputs:</p>
-                      <pre className="text-xs mt-1">
-                        {JSON.stringify(gumloopResponse.outputs, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {isLoading && (
-              <div className="w-full max-w-lg mx-auto mb-8 flex flex-col items-center p-4 bg-primary/5 rounded-lg animate-pulse">
-                <Loader2 className="h-10 w-10 text-primary animate-spin mb-3" />
-                <p className="text-primary font-medium">Processing your travel data...</p>
-                <p className="text-sm text-muted-foreground mt-1">This might take a moment</p>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-3">
-                  <div className="bg-primary h-2.5 rounded-full animate-progress" style={{width: '70%'}}></div>
-                </div>
-              </div>
-            )}
             
             <p className="text-xl text-muted-foreground mb-10 max-w-2xl animate-fade-in" style={{ animationDelay: "0.6s" }}>
               Discover, plan, and experience your dream vacation with a smart travel buddy that helps you create personalized itineraries based on your preferences and budget.
