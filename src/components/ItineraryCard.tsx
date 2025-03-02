@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CalendarClock, MapPin, BadgeDollarSign } from "lucide-react";
 import GlassMorphCard from "./GlassMorphCard";
@@ -61,12 +60,9 @@ const ItineraryCard = ({
     return text;
   };
 
-  // Default fallback image if the provided image is invalid or missing
-  const fallbackImage = "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=600&q=80";
-  
   // Image error handling function
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src = fallbackImage;
+    e.currentTarget.style.display = 'none';
   };
 
   return (
@@ -76,13 +72,15 @@ const ItineraryCard = ({
       onClick={onClick}
     >
       <div className="flex flex-col h-full">
-        <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
-          <img
-            src={image || fallbackImage}
-            alt={title}
-            className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
-            onError={handleImageError}
-          />
+        <div className="relative aspect-video rounded-lg overflow-hidden mb-4 bg-black">
+          {image && (
+            <img
+              src={image}
+              alt={title}
+              className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+              onError={handleImageError}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="absolute bottom-3 left-3 bg-primary text-white text-xs font-medium py-1 px-2 rounded-full">
             Day {day}
