@@ -122,7 +122,7 @@ const Index = () => {
     {
       name: "New York",
       country: "USA",
-      image: "https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=800&q=80",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/800px-Empire_State_Building_%28aerial_view%29.jpg",
     },
     {
       name: "Venice",
