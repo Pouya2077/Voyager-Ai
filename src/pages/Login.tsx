@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import GlassMorphCard from "@/components/GlassMorphCard";
 import { ArrowRight, LogIn, User, Lock, Mail } from "lucide-react";
-import { startGumloopPipeline, getPipelineRunStatus } from "@/utils/gumloopApi";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { signIn, signUp } from "@/utils/supabaseClient";
 
 interface LoginProps {
   setIsLoggedIn: (value: boolean) => void;
@@ -28,83 +28,31 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
     setIsLoading(true);
 
     try {
-      // Call Gumloop API for sign-up or sign-in
-      const userId = "1y5cS7wht6QDSjLHGBJOi6vu19y1";
-      const savedItemId = "2KLH8qYh4rTQf4qYM1Sfh3";
-      const apiKey = "4997b5ac80a9402d977502ac41891eec";
-
-      const pipelineInputs = [
-        { input_name: "name", value: username },
-        { input_name: "email", value: email },
-        { input_name: "password", value: password },
-        { input_name: "mode", value: mode }
-      ];
-
-      console.log(`Starting ${mode} authentication with:`, {
-        email,
-        mode,
-        pipelineInputs
-      });
-
-      // Start the pipeline with all inputs
-      const pipelineResponse = await startGumloopPipeline(
-        userId,
-        savedItemId,
-        apiKey,
-        pipelineInputs
-      );
-
-      console.log("🔑 Authentication pipeline response:", pipelineResponse);
-
-      if (pipelineResponse && pipelineResponse.run_id) {
-        const runId = pipelineResponse.run_id;
-        
-        // Poll for results
-        let isComplete = false;
-        let attempts = 0;
-        let authResult = null;
-        
-        while (!isComplete && attempts < 30) {
-          attempts++;
-          
-          const statusResponse = await getPipelineRunStatus(runId, userId, apiKey);
-          console.log(`🔄 Auth status check (attempt ${attempts}):`, statusResponse);
-          
-          // Check if there are outputs or if the pipeline is done
-          if (
-            statusResponse.state === "COMPLETED" || 
-            statusResponse.state === "ERROR" || 
-            (statusResponse.outputs && statusResponse.outputs.authStatus)
-          ) {
-            isComplete = true;
-            authResult = statusResponse.outputs;
-            
-            console.log("🔐 Authentication result:", JSON.stringify(authResult, null, 2));
-            
-            if (authResult && authResult.authStatus === "success") {
-              // Set login state
-              localStorage.setItem("isLoggedIn", "true");
-              localStorage.setItem("username", username);
-              localStorage.setItem("email", email);
-              // Update parent component state
-              setIsLoggedIn(true);
-              toast.success(mode === "sign-up" ? "Successfully signed up!" : "Successfully signed in!");
-              // Force navigate to home page
-              navigate("/", { replace: true });
-            } else {
-              toast.error(`${mode === "sign-up" ? "Sign up" : "Sign in"} failed: ${authResult?.message || "Unknown error"}`);
-            }
-          } else {
-            // Wait before polling again
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
-        
-        if (!isComplete) {
-          toast.error(`${mode === "sign-up" ? "Sign up" : "Sign in"} took too long, please try again`);
-        }
+      let result;
+      
+      if (mode === "sign-up") {
+        result = await signUp(email, password);
       } else {
-        throw new Error(`Failed to start authentication pipeline`);
+        result = await signIn(email, password);
+      }
+
+      if (result.error) {
+        toast.error(`${mode === "sign-up" ? "Sign up" : "Sign in"} failed: ${result.error.message}`);
+      } else {
+        // Set login state
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("username", username || email.split('@')[0]);
+        localStorage.setItem("email", email);
+        
+        // Update parent component state
+        setIsLoggedIn(true);
+        
+        toast.success(mode === "sign-up" 
+          ? "Successfully signed up! Check your email for confirmation." 
+          : "Successfully signed in!");
+        
+        // Force navigate to home page
+        navigate("/", { replace: true });
       }
     } catch (error) {
       console.error(`${mode === "sign-up" ? "Sign up" : "Sign in"} error:`, error);
@@ -156,7 +104,6 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       className="pl-10"
-                      required
                     />
                   </div>
                 </div>
