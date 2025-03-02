@@ -50,6 +50,7 @@ const LocationSearch = ({ onLocationSelect, initialValue = "" }: LocationSearchP
     setSearchTerm(location);
     setSuggestions([]);
     onLocationSelect(location);
+    setIsSearchFocused(false); // Close the dropdown when a selection is made
   };
 
   const handleInputSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
