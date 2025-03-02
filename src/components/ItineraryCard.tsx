@@ -71,6 +71,11 @@ const ItineraryCard = ({
     e.currentTarget.style.display = 'none';
   };
 
+  // Use Empire State Building image for first day
+  const imageSource = day === 1 ? 
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/800px-Empire_State_Building_%28aerial_view%29.jpg" : 
+    image;
+
   return (
     <GlassMorphCard
       className="group cursor-pointer h-full"
@@ -79,9 +84,9 @@ const ItineraryCard = ({
     >
       <div className="flex flex-col h-full">
         <div className="relative aspect-video rounded-lg overflow-hidden mb-4 bg-black">
-          {image && !imageError && (
+          {imageSource && !imageError && (
             <img
-              src={image}
+              src={imageSource}
               alt={title}
               className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
               onError={handleImageError}
