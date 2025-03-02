@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for interacting with the Gumloop API
  */
@@ -146,6 +147,9 @@ export const transformGumloopToItinerary = (gumloopData: any) => {
       summary: outputs.summary || "",
       accommodation: outputs.accommodation || [],
       flights: outputs.flights || [],
+      accommodationLinks: outputs.accommodation_links || [],
+      flightLinks: outputs.flight_links || [],
+      images: outputs.images || [], // Include images array
       // Add other fields as needed
     };
   } catch (error) {
