@@ -36,20 +36,12 @@ const App = () => {
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
 
-  // Initialize theme on app load
+  // Initialize app on load (removed dark mode initialization)
   useEffect(() => {
-    // Check localStorage first
-    const storedTheme = localStorage.getItem("theme");
+    // Light mode is the only mode now, so we remove any dark classes if they exist
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", "light");
     
-    if (storedTheme) {
-      document.documentElement.classList.toggle("dark", storedTheme === "dark");
-    } else {
-      // If no stored preference, check system preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      document.documentElement.classList.toggle("dark", prefersDark);
-      localStorage.setItem("theme", prefersDark ? "dark" : "light");
-    }
-
     setIsLoading(false);
   }, []);
 
