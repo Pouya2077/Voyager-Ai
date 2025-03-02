@@ -52,6 +52,24 @@ const LocationSearch = ({ onLocationSelect, initialValue = "" }: LocationSearchP
     onLocationSelect(location);
   };
 
+  const handleInputSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      onLocationSelect(searchTerm);
+      setIsSearchFocused(false);
+    }
+  };
+
+  const handleBlur = () => {
+    // Allow selecting custom locations that are not in the suggestions list
+    setTimeout(() => {
+      setIsSearchFocused(false);
+      // If there's a valid search term, use it even if it's not in the suggestions
+      if (searchTerm.trim() && !popularLocations.includes(searchTerm)) {
+        onLocationSelect(searchTerm);
+      }
+    }, 200);
+  };
+
   return (
     <div className="relative w-full">
       <div className={`flex items-center transition-all duration-300 bg-white border rounded-xl overflow-hidden ${
@@ -66,7 +84,8 @@ const LocationSearch = ({ onLocationSelect, initialValue = "" }: LocationSearchP
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setIsSearchFocused(true)}
-          onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+          onBlur={handleBlur}
+          onKeyDown={handleInputSubmit}
           placeholder="Search destinations..."
           className="w-full py-3 px-3 bg-transparent outline-none text-foreground"
         />
@@ -98,8 +117,17 @@ const LocationSearch = ({ onLocationSelect, initialValue = "" }: LocationSearchP
               ))}
             </ul>
           ) : searchTerm.length > 1 ? (
-            <div className="p-4 text-center text-muted-foreground">
-              No destinations found. Try a different search term.
+            <div className="p-4">
+              <div className="text-center text-muted-foreground mb-2">
+                No matching destinations found.
+              </div>
+              <button
+                onClick={() => handleSelect(searchTerm)}
+                className="flex items-center justify-center w-full px-4 py-2 bg-primary/10 hover:bg-primary/20 rounded-md text-primary transition-colors"
+              >
+                <MapPin size={16} className="mr-2" />
+                <span>Use "{searchTerm}" as destination</span>
+              </button>
             </div>
           ) : (
             <div className="p-2">
