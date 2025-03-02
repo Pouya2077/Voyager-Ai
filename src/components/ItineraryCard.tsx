@@ -1,16 +1,15 @@
+
 import React, { useState } from "react";
 import { CalendarClock, MapPin } from "lucide-react";
 import GlassMorphCard from "./GlassMorphCard";
 
-// Define array of image URLs from the API output
-const apiImages = [
+// Define a fallback array of image URLs in case API data is not available
+const fallbackImages = [
   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/800px-Empire_State_Building_%28aerial_view%29.jpg",
   "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/NYC_Downtown_Manhattan_Skyline_seen_from_Paulus_Hook_2019-12-20_IMG_7347_FRD_%28cropped%29.jpg/1280px-NYC_Downtown_Manhattan_Skyline_seen_from_Paulus_Hook_2019-12-20_IMG_7347_FRD_%28cropped%29.jpg",
   "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu.jpg/800px-View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu.jpg",
   "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Top_of_Rock_Cropped.jpg/2560px-Top_of_Rock_Cropped.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Empire_State_Building_from_the_Top_of_the_Rock.jpg/1920px-Empire_State_Building_from_the_Top_of_the_Rock.jpg",
-  "https://www.oneworldobservatory.com/wp-content/uploads/grid-image-desktop-2.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/NYC_Montage_2014_4_-_Jleon.jpg/1920px-NYC_Montage_2014_4_-_Jleon.jpg"
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Empire_State_Building_from_the_Top_of_the_Rock.jpg/1920px-Empire_State_Building_from_the_Top_of_the_Rock.jpg"
 ];
 
 interface ItineraryCardProps {
@@ -22,6 +21,7 @@ interface ItineraryCardProps {
   cost?: string;
   image?: string;
   onClick?: () => void;
+  joinedLists?: string[]; // New prop for the "joined lists" data from API
 }
 
 const ItineraryCard = ({
@@ -32,7 +32,8 @@ const ItineraryCard = ({
   time,
   cost,
   image,
-  onClick
+  onClick,
+  joinedLists = [] // Default to empty array if not provided
 }: ItineraryCardProps) => {
   const [imageError, setImageError] = useState(false);
   
@@ -80,10 +81,26 @@ const ItineraryCard = ({
     e.currentTarget.style.display = 'none';
   };
 
-  // Get image from API images array based on day number
+  // Function to extract image URL from joined list item
+  const extractImageUrl = (item: string): string => {
+    // Find the first URL in the string
+    const urlMatch = item.match(/(https?:\/\/[^\s]+)/);
+    return urlMatch ? urlMatch[0] : '';
+  };
+
+  // Get image from joined lists array based on day number
   // If day exceeds array length, cycle back to the beginning (modulo operation)
-  const imageIndex = (day - 1) % apiImages.length;
-  const imageSource = apiImages[imageIndex];
+  let imageSource = '';
+  
+  if (joinedLists && joinedLists.length > 0) {
+    const imageIndex = (day - 1) % joinedLists.length;
+    const listItem = joinedLists[imageIndex];
+    imageSource = extractImageUrl(listItem);
+  } else {
+    // Fallback to old method if joinedLists is not available
+    const fallbackIndex = (day - 1) % fallbackImages.length;
+    imageSource = fallbackImages[fallbackIndex];
+  }
 
   return (
     <GlassMorphCard

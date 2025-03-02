@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for interacting with the Gumloop API
  */
@@ -127,7 +126,7 @@ export const getPipelineRunStatus = async (
     
     // Print full API response data when we get it
     if (data && data.outputs) {
-      console.log("📊 GUMLOOP API COMPLETE RESPONSE:");
+      console.log("��� GUMLOOP API COMPLETE RESPONSE:");
       console.log(JSON.stringify(data, null, 2));
       console.log("📋 GUMLOOP API OUTPUTS:");
       console.log(JSON.stringify(data.outputs, null, 2));
@@ -150,14 +149,11 @@ export const transformGumloopToItinerary = (gumloopData: any) => {
     console.log("🔄 Transforming API outputs:", outputs);
     console.log("🔄 Full API outputs JSON:", JSON.stringify(outputs, null, 2));
     
-    // Clean up image URLs by extracting only the valid URL part
-    const cleanedImages = outputs.images 
-      ? outputs.images.map((image: string) => {
-          // Extract only the part starting with http or https
-          const urlMatch = image.match(/(https?:\/\/[^\s]+)/);
-          return urlMatch ? urlMatch[0] : '';
-        })
-      : [];
+    // Get the joined lists data from the outputs
+    // This could be under "output", "joined_lists", or similar keys
+    const joinedLists = outputs.output || outputs.joined_lists || outputs["joined lists"] || [];
+    
+    console.log("🔄 Joined Lists data:", joinedLists);
     
     // Map the sights data from the new API format
     return {
@@ -168,7 +164,7 @@ export const transformGumloopToItinerary = (gumloopData: any) => {
       flights: outputs.flights || [],
       accommodationLinks: outputs.accommodation_links || [],
       flightLinks: outputs.flight_links || [],
-      images: cleanedImages, // Use the cleaned images array
+      joinedLists: joinedLists, // Add the joined lists data
       // Add other fields as needed
     };
   } catch (error) {
