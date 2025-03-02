@@ -26,13 +26,6 @@ const ItineraryCard = ({
 }: ItineraryCardProps) => {
   const [imageError, setImageError] = useState(false);
   
-  // Log image URL only after component mounts/renders
-  React.useEffect(() => {
-    if (image) {
-      console.log(`Image URL (Day ${day}): ${image}`);
-    }
-  }, [image, day]);
-  
   // Helper function to display external links in description
   const renderDescription = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;

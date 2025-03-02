@@ -190,13 +190,6 @@ const Itinerary = () => {
   const generateMockItinerary = () => {
     if (!tripDetails) return [];
     
-    const images = [
-      "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1469041797191-50ace28483c3?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=800&q=80"
-    ];
-    
     const activities = sights.length > 0 
       ? sights 
       : [
@@ -216,7 +209,11 @@ const Itinerary = () => {
       for (let j = 0; j < numActivities; j++) {
         const activityIndex = (i + j) % activities.length;
         const randomActivity = activities[activityIndex];
-        const randomImage = images[Math.floor(Math.random() * images.length)];
+        
+        // Generate a search-based image URL based on the sight name and destination
+        const searchTerm = encodeURIComponent(`${randomActivity} ${city}`);
+        const imageUrl = `https://source.unsplash.com/600x400/?${searchTerm}`;
+        
         const startHour = 8 + j * 3;
         
         dayActivities.push({
@@ -225,7 +222,7 @@ const Itinerary = () => {
           location: `${city} ${randomActivity}`,
           time: `${startHour}:00 - ${startHour + 2}:00`,
           cost: `$${Math.floor(Math.random() * 50) + 20}`,
-          image: randomImage
+          image: imageUrl
         });
       }
       
