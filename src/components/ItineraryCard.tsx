@@ -3,6 +3,17 @@ import React, { useState } from "react";
 import { CalendarClock, MapPin } from "lucide-react";
 import GlassMorphCard from "./GlassMorphCard";
 
+// Define array of image URLs from the API output
+const apiImages = [
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/800px-Empire_State_Building_%28aerial_view%29.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/NYC_Downtown_Manhattan_Skyline_seen_from_Paulus_Hook_2019-12-20_IMG_7347_FRD_%28cropped%29.jpg/1280px-NYC_Downtown_Manhattan_Skyline_seen_from_Paulus_Hook_2019-12-20_IMG_7347_FRD_%28cropped%29.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu.jpg/800px-View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Top_of_Rock_Cropped.jpg/2560px-Top_of_Rock_Cropped.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Empire_State_Building_from_the_Top_of_the_Rock.jpg/1920px-Empire_State_Building_from_the_Top_of_the_Rock.jpg",
+  "https://www.oneworldobservatory.com/wp-content/uploads/grid-image-desktop-2.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/NYC_Montage_2014_4_-_Jleon.jpg/1920px-NYC_Montage_2014_4_-_Jleon.jpg"
+];
+
 interface ItineraryCardProps {
   day: number;
   title: string;
@@ -71,10 +82,10 @@ const ItineraryCard = ({
     e.currentTarget.style.display = 'none';
   };
 
-  // Use Empire State Building image for first day
-  const imageSource = day === 1 ? 
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/800px-Empire_State_Building_%28aerial_view%29.jpg" : 
-    image;
+  // Get image from API images array based on day number
+  // If day exceeds array length, cycle back to the beginning (modulo operation)
+  const imageIndex = (day - 1) % apiImages.length;
+  const imageSource = apiImages[imageIndex];
 
   return (
     <GlassMorphCard
