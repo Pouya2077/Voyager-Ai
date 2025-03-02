@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { CalendarClock, MapPin } from "lucide-react";
 import GlassMorphCard from "./GlassMorphCard";
@@ -77,7 +76,6 @@ const ItineraryCard = ({
   // Image error handling function
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     setImageError(true);
-    // Remove the src attribute entirely to leave a black background
     e.currentTarget.src = '';
     e.currentTarget.style.display = 'none';
   };
@@ -89,9 +87,8 @@ const ItineraryCard = ({
 
   return (
     <GlassMorphCard
-      className="group cursor-pointer h-full"
-      hoverEffect={true}
-      onClick={onClick}
+      className="group h-full"
+      hoverEffect={false}
     >
       <div className="flex flex-col h-full">
         <div className="relative aspect-video rounded-lg overflow-hidden mb-4 bg-black">
@@ -99,7 +96,7 @@ const ItineraryCard = ({
             <img
               src={imageSource}
               alt={title}
-              className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover"
               onError={handleImageError}
             />
           )}
@@ -128,10 +125,10 @@ const ItineraryCard = ({
         </p>
         
         <div className="mt-auto pt-3 border-t border-border">
-          <button className="text-sm font-medium text-primary flex items-center">
-            View Details
+          <span className="text-sm font-medium text-primary flex items-center">
+            Details
             <svg
-              className="h-4 w-4 ml-1 transform transition-transform duration-200 group-hover:translate-x-1"
+              className="h-4 w-4 ml-1"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -142,7 +139,7 @@ const ItineraryCard = ({
                 clipRule="evenodd"
               />
             </svg>
-          </button>
+          </span>
         </div>
       </div>
     </GlassMorphCard>
