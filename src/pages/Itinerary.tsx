@@ -110,7 +110,7 @@ const Itinerary = () => {
         pipelineInputs
       );
       
-      console.log("Gumloop Pipeline Response:", response);
+      console.log("🚀 Gumloop Pipeline Response:", response);
       setRunId(response.run_id);
       
       if (response.run_id) {
@@ -133,38 +133,44 @@ const Itinerary = () => {
         GUMLOOP_API_KEY
       );
       
-      console.log("Gumloop Pipeline Status:", statusResponse);
+      console.log("✅ Gumloop Pipeline Status:", statusResponse);
       setRunStatus(statusResponse.state);
       
       if (statusResponse.state === "DONE") {
         if (statusResponse.outputs) {
-          console.log("API outputs:", statusResponse.outputs);
+          console.log("📋 FULL API OUTPUTS IN ITINERARY:", JSON.stringify(statusResponse.outputs, null, 2));
           
           if (statusResponse.outputs.sights) {
             setSights(statusResponse.outputs.sights);
+            console.log("🏛️ Sights data:", statusResponse.outputs.sights);
           }
           if (statusResponse.outputs.flights) {
             setFlights(Array.isArray(statusResponse.outputs.flights) ? 
               statusResponse.outputs.flights : 
               [statusResponse.outputs.flights]);
+            console.log("✈️ Flights data:", statusResponse.outputs.flights);
           }
           if (statusResponse.outputs.activities) {
             setActivities(statusResponse.outputs.activities);
+            console.log("🎭 Activities data:", statusResponse.outputs.activities);
           }
           if (statusResponse.outputs.accommodations) {
             setAccommodations(Array.isArray(statusResponse.outputs.accommodations) ? 
               statusResponse.outputs.accommodations : 
               [statusResponse.outputs.accommodations]);
+            console.log("🏨 Accommodations data:", statusResponse.outputs.accommodations);
           }
           if (statusResponse.outputs["accommodation links"]) {
             setAccommodationLinks(Array.isArray(statusResponse.outputs["accommodation links"]) ? 
               statusResponse.outputs["accommodation links"] : 
               [statusResponse.outputs["accommodation links"]]);
+            console.log("🔗 Accommodation links:", statusResponse.outputs["accommodation links"]);
           }
           if (statusResponse.outputs["flight links"]) {
             setFlightLinks(Array.isArray(statusResponse.outputs["flight links"]) ? 
               statusResponse.outputs["flight links"] : 
               [statusResponse.outputs["flight links"]]);
+            console.log("🔗 Flight links:", statusResponse.outputs["flight links"]);
           }
         }
         setIsLoading(false);

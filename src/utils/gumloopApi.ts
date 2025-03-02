@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for interacting with the Gumloop API
  */
@@ -123,6 +124,15 @@ export const getPipelineRunStatus = async (
     }
 
     const data = await response.json();
+    
+    // Print full API response data when we get it
+    if (data && data.outputs) {
+      console.log("📊 GUMLOOP API COMPLETE RESPONSE:");
+      console.log(JSON.stringify(data, null, 2));
+      console.log("📋 GUMLOOP API OUTPUTS:");
+      console.log(JSON.stringify(data.outputs, null, 2));
+    }
+    
     return data;
   } catch (error) {
     console.error("Failed to get pipeline run status:", error);
@@ -137,7 +147,8 @@ export const getPipelineRunStatus = async (
 export const transformGumloopToItinerary = (gumloopData: any) => {
   try {
     const { outputs } = gumloopData;
-    console.log("Transforming API outputs:", outputs);
+    console.log("🔄 Transforming API outputs:", outputs);
+    console.log("🔄 Full API outputs JSON:", JSON.stringify(outputs, null, 2));
     
     // Clean up image URLs by extracting only the valid URL part
     const cleanedImages = outputs.images 

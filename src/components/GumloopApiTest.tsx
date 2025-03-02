@@ -145,6 +145,10 @@ const GumloopApiTest = ({
         if (statusResponse.state === "COMPLETED" || statusResponse.state === "ERROR" || statusResponse.outputs) {
           isComplete = true;
           setResults(statusResponse);
+          
+          // Print the complete output directly
+          console.log("🔥 COMPLETE GUMLOOP API OUTPUT:", JSON.stringify(statusResponse, null, 2));
+          
           if (statusResponse.state === "COMPLETED") {
             toast.success("Successfully fetched data from Gumloop!");
           } else if (statusResponse.state === "ERROR") {
@@ -255,9 +259,36 @@ const GumloopApiTest = ({
       {results && !loading && (
         <div className="mt-4">
           <h3 className="text-lg font-medium mb-2">Results:</h3>
-          <pre className="bg-secondary/30 p-4 rounded-md overflow-auto max-h-[200px] text-xs">
+          <pre className="bg-secondary/30 p-4 rounded-md overflow-auto max-h-[400px] text-xs whitespace-pre-wrap">
             {JSON.stringify(results, null, 2)}
           </pre>
+          
+          {results.outputs && (
+            <div className="mt-4">
+              <h3 className="text-lg font-medium mb-2">Processed Outputs:</h3>
+              <div className="space-y-2">
+                {Object.entries(results.outputs).map(([key, value]) => (
+                  <div key={key} className="bg-secondary/20 p-3 rounded-md">
+                    <div className="font-semibold text-sm mb-1">{key}:</div>
+                    <div className="text-sm overflow-auto max-h-[100px]">
+                      {Array.isArray(value) 
+                        ? (
+                          <ul className="list-disc pl-5">
+                            {value.map((item, i) => (
+                              <li key={i}>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</li>
+                            ))}
+                          </ul>
+                        )
+                        : typeof value === 'object'
+                          ? JSON.stringify(value, null, 2)
+                          : String(value)
+                      }
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </GlassMorphCard>

@@ -40,6 +40,12 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
         { input_name: "mode", value: mode }
       ];
 
+      console.log(`Starting ${mode} authentication with:`, {
+        email,
+        mode,
+        pipelineInputs
+      });
+
       // Start the pipeline with all inputs
       const pipelineResponse = await startGumloopPipeline(
         userId,
@@ -47,6 +53,8 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
         apiKey,
         pipelineInputs
       );
+
+      console.log("🔑 Authentication pipeline response:", pipelineResponse);
 
       if (pipelineResponse && pipelineResponse.run_id) {
         const runId = pipelineResponse.run_id;
@@ -60,6 +68,7 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
           attempts++;
           
           const statusResponse = await getPipelineRunStatus(runId, userId, apiKey);
+          console.log(`🔄 Auth status check (attempt ${attempts}):`, statusResponse);
           
           // Check if there are outputs or if the pipeline is done
           if (
@@ -69,6 +78,8 @@ const Login = ({ setIsLoggedIn }: LoginProps) => {
           ) {
             isComplete = true;
             authResult = statusResponse.outputs;
+            
+            console.log("🔐 Authentication result:", JSON.stringify(authResult, null, 2));
             
             if (authResult && authResult.authStatus === "success") {
               // Set login state
