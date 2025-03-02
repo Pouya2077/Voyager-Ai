@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for interacting with the Gumloop API
  */
@@ -140,6 +139,15 @@ export const transformGumloopToItinerary = (gumloopData: any) => {
     const { outputs } = gumloopData;
     console.log("Transforming API outputs:", outputs);
     
+    // Clean up image URLs by extracting only the valid URL part
+    const cleanedImages = outputs.images 
+      ? outputs.images.map((image: string) => {
+          // Extract only the part starting with http or https
+          const urlMatch = image.match(/(https?:\/\/[^\s]+)/);
+          return urlMatch ? urlMatch[0] : '';
+        })
+      : [];
+    
     // Map the sights data from the new API format
     return {
       destination: outputs.destination || "",
@@ -149,7 +157,7 @@ export const transformGumloopToItinerary = (gumloopData: any) => {
       flights: outputs.flights || [],
       accommodationLinks: outputs.accommodation_links || [],
       flightLinks: outputs.flight_links || [],
-      images: outputs.images || [], // Include images array
+      images: cleanedImages, // Use the cleaned images array
       // Add other fields as needed
     };
   } catch (error) {
