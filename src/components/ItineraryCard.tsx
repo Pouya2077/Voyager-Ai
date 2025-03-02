@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { CalendarClock, MapPin, BadgeDollarSign } from "lucide-react";
 import GlassMorphCard from "./GlassMorphCard";
 
@@ -24,6 +24,8 @@ const ItineraryCard = ({
   image,
   onClick
 }: ItineraryCardProps) => {
+  const [imageError, setImageError] = useState(false);
+  
   // Helper function to display external links in description
   const renderDescription = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -63,8 +65,15 @@ const ItineraryCard = ({
 
   // Image error handling function
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.error(`Failed to load image: ${image}`);
+    setImageError(true);
     e.currentTarget.style.display = 'none';
   };
+
+  // Debug: Print image URL to console
+  if (image) {
+    console.log(`ItineraryCard image URL (Day ${day}): ${image}`);
+  }
 
   return (
     <GlassMorphCard
@@ -74,7 +83,7 @@ const ItineraryCard = ({
     >
       <div className="flex flex-col h-full">
         <div className="relative aspect-video rounded-lg overflow-hidden mb-4 bg-black">
-          {image && (
+          {image && !imageError && (
             <img
               src={image}
               alt={title}
