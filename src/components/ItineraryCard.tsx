@@ -26,6 +26,13 @@ const ItineraryCard = ({
 }: ItineraryCardProps) => {
   const [imageError, setImageError] = useState(false);
   
+  // Log image URL only after component mounts/renders
+  React.useEffect(() => {
+    if (image) {
+      console.log(`Image URL (Day ${day}): ${image}`);
+    }
+  }, [image, day]);
+  
   // Helper function to display external links in description
   const renderDescription = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -65,17 +72,11 @@ const ItineraryCard = ({
 
   // Image error handling function
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    console.error(`Failed to load image: ${image}`);
     setImageError(true);
     // Remove the src attribute entirely to leave a black background
     e.currentTarget.src = '';
     e.currentTarget.style.display = 'none';
   };
-
-  // Debug: Print image URL to console
-  if (image) {
-    console.log(`ItineraryCard image URL (Day ${day}): ${image}`);
-  }
 
   return (
     <GlassMorphCard
