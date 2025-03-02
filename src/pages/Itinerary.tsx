@@ -96,11 +96,10 @@ const Itinerary = () => {
         { input_name: "end_date", value: formattedEndDate }
       ];
       
-      // Debug log to see the inputs being sent to the API
       console.log("Gumloop API Inputs:", {
         userId: GUMLOOP_USER_ID,
         savedItemId: GUMLOOP_SAVED_ITEM_ID,
-        apiKey: GUMLOOP_API_KEY.substring(0, 4) + "...", // Show only first few chars of API key for security
+        apiKey: GUMLOOP_API_KEY.substring(0, 4) + "...",
         pipelineInputs
       });
       
@@ -192,13 +191,10 @@ const Itinerary = () => {
     if (!tripDetails) return [];
     
     const images = [
-      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1526668665780-9a397bd45320?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1462400362591-9ca55235346a?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1504607798333-52a30db54a5d?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1507369632363-a0b8cfbfb290?auto=format&fit=crop&w=800&q=80"
+      "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1469041797191-50ace28483c3?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=800&q=80"
     ];
     
     const activities = sights.length > 0 
@@ -315,7 +311,6 @@ const Itinerary = () => {
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                   <div className="h-full bg-primary animate-progress"></div>
                 </div>
-                {/* Removed the Recent logs section */}
               </div>
             )}
           </div>
@@ -393,11 +388,6 @@ const Itinerary = () => {
           <div className="mb-8 overflow-x-auto pb-2">
             <TabsList className="inline-flex min-w-max">
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              {mockItinerary.map((day) => (
-                <TabsTrigger key={day.day} value={`day-${day.day}`}>
-                  Day {day.day}
-                </TabsTrigger>
-              ))}
             </TabsList>
           </div>
           
@@ -451,7 +441,6 @@ const Itinerary = () => {
                   )}
                 </div>
                 
-                {/* Flights Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
                     <Plane className="mr-2 h-5 w-5 text-primary" />
@@ -490,7 +479,6 @@ const Itinerary = () => {
                   )}
                 </div>
                 
-                {/* Flight Links Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
                     <LinkIcon className="mr-2 h-5 w-5 text-primary" />
@@ -536,7 +524,6 @@ const Itinerary = () => {
                   )}
                 </div>
                 
-                {/* Accommodations Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
                     <Hotel className="mr-2 h-5 w-5 text-primary" />
@@ -575,7 +562,6 @@ const Itinerary = () => {
                   )}
                 </div>
                 
-                {/* Accommodation Links Section */}
                 <div className="mb-10">
                   <div className="flex items-center mb-4">
                     <LinkIcon className="mr-2 h-5 w-5 text-primary" />
@@ -621,7 +607,6 @@ const Itinerary = () => {
                   )}
                 </div>
                 
-                {/* Activities Section */}
                 <div className="mb-6">
                   <div className="flex items-center mb-4">
                     <Landmark className="mr-2 h-5 w-5 text-primary" />
@@ -764,124 +749,6 @@ const Itinerary = () => {
               </div>
             </div>
           </TabsContent>
-          
-          {mockItinerary.map((day) => (
-            <TabsContent key={day.day} value={`day-${day.day}`} className="animate-fade-in">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold">Day {day.day}: {format(day.date, "EEEE, MMMM d")}</h2>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    {day.activities.map((activity, index) => (
-                      <GlassMorphCard key={index} className="flex flex-col sm:flex-row gap-4">
-                        <div className="sm:w-1/3 flex-shrink-0">
-                          <div className="aspect-video sm:aspect-square rounded-lg overflow-hidden">
-                            <img
-                              src={activity.image}
-                              alt={activity.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="sm:w-2/3 flex flex-col">
-                          <h3 className="text-xl font-semibold mb-1">{activity.title}</h3>
-                          
-                          <div className="flex flex-wrap gap-x-4 gap-y-2 mb-3 text-sm text-muted-foreground">
-                            <div className="flex items-center">
-                              <Clock className="mr-1 h-4 w-4" />
-                              <span>{activity.time}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <MapPin className="mr-1 h-4 w-4" />
-                              <span>{activity.location}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <BadgeDollarSign className="mr-1 h-4 w-4" />
-                              <span>{activity.cost}/person</span>
-                            </div>
-                          </div>
-                          
-                          <p className="text-muted-foreground mb-4 flex-grow">
-                            {activity.description}
-                          </p>
-                          
-                          <div className="flex flex-wrap gap-2 mt-auto">
-                            <Button variant="outline" size="sm">
-                              View Details
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              Find Alternatives
-                            </Button>
-                          </div>
-                        </div>
-                      </GlassMorphCard>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-6">
-                  <GlassMorphCard>
-                    <h3 className="text-lg font-semibold mb-4">Day {day.day} Summary</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="text-sm text-muted-foreground mb-1">Date</div>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1 text-primary" />
-                          <span>{format(day.date, "EEEE, MMMM d, yyyy")}</span>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="text-sm text-muted-foreground mb-1">Activities</div>
-                        <div className="font-medium">{day.activities.length} planned</div>
-                      </div>
-                      
-                      <div>
-                        <div className="text-sm text-muted-foreground mb-1">Estimated Cost</div>
-                        <div className="font-medium">
-                          ${day.activities.reduce((total, activity) => {
-                            const cost = parseInt(activity.cost.replace("$", ""), 10);
-                            return total + (cost * tripDetails.travelers);
-                          }, 0)}
-                        </div>
-                      </div>
-                    </div>
-                  </GlassMorphCard>
-                  
-                  <GlassMorphCard>
-                    <h3 className="text-lg font-semibold mb-4">Weather Forecast</h3>
-                    <div className="flex items-center justify-center p-4">
-                      <div className="text-center">
-                        <div className="h-16 w-16 mx-auto mb-2">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-500">
-                            <circle cx="12" cy="12" r="5" />
-                            <line x1="12" y1="1" x2="12" y2="3" />
-                            <line x1="12" y1="21" x2="12" y2="23" />
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                            <line x1="1" y1="12" x2="3" y2="12" />
-                            <line x1="21" y1="12" x2="23" y2="12" />
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                          </svg>
-                        </div>
-                        <div className="text-3xl font-semibold">75°F</div>
-                        <div className="text-muted-foreground">Sunny</div>
-                        <div className="text-sm text-muted-foreground mt-1">Perfect weather for sightseeing!</div>
-                      </div>
-                    </div>
-                  </GlassMorphCard>
-                  
-                  <Button className="w-full">
-                    Edit Day {day.day}
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-          ))}
         </Tabs>
       </div>
     </div>

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { CalendarClock, MapPin, BadgeDollarSign } from "lucide-react";
+import { CalendarClock, MapPin } from "lucide-react";
 import GlassMorphCard from "./GlassMorphCard";
 
 interface ItineraryCardProps {
@@ -63,11 +63,22 @@ const ItineraryCard = ({
     return text;
   };
 
+  // Fallback images from Unsplash that are more reliable
+  const fallbackImages = [
+    "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1469041797191-50ace28483c3?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=800&q=80"
+  ];
+
   // Image error handling function
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.error(`Failed to load image: ${image}`);
     setImageError(true);
-    e.currentTarget.style.display = 'none';
+    
+    // Use a fallback image based on the day number
+    const fallbackIndex = (day - 1) % fallbackImages.length;
+    e.currentTarget.src = fallbackImages[fallbackIndex];
   };
 
   // Debug: Print image URL to console
@@ -83,24 +94,17 @@ const ItineraryCard = ({
     >
       <div className="flex flex-col h-full">
         <div className="relative aspect-video rounded-lg overflow-hidden mb-4 bg-black">
-          {image && !imageError && (
-            <img
-              src={image}
-              alt={title}
-              className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
-              onError={handleImageError}
-            />
-          )}
+          <img
+            src={imageError ? fallbackImages[(day - 1) % fallbackImages.length] : image}
+            alt={title}
+            className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+            onError={handleImageError}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="absolute bottom-3 left-3 bg-primary text-white text-xs font-medium py-1 px-2 rounded-full">
             Day {day}
           </div>
-          {cost && (
-            <div className="absolute bottom-3 right-3 bg-white/80 backdrop-blur-sm text-foreground text-xs font-medium py-1 px-2 rounded-full flex items-center">
-              <BadgeDollarSign size={12} className="mr-1" />
-              {cost}
-            </div>
-          )}
+          {/* Removed cost badge */}
         </div>
         
         <h3 className="text-lg font-semibold mb-1 line-clamp-1">{title}</h3>
