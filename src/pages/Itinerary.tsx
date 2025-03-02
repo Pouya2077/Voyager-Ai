@@ -210,9 +210,10 @@ const Itinerary = () => {
         const activityIndex = (i + j) % activities.length;
         const randomActivity = activities[activityIndex];
         
-        // Generate a search-based image URL based on the sight name and destination
-        const searchTerm = encodeURIComponent(`${randomActivity} ${city}`);
-        const imageUrl = `https://source.unsplash.com/600x400/?${searchTerm}`;
+        // Generate a better image URL with specific sight name for better relevance
+        // Use the same format as the main menu images
+        const specificSearchQuery = encodeURIComponent(`${randomActivity} ${city} landmark`);
+        const imageUrl = `https://source.unsplash.com/featured/?${specificSearchQuery}`;
         
         const startHour = 8 + j * 3;
         
