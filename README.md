@@ -1,8 +1,8 @@
-## Voyager AI
-______________
+# Voyager AI
+
 Voyager Ai is a travel assistant optimized to make the best travel itinerary catered to your preferences! Using Gumloop OpenAi API calls, travel data is aggregated and concisely crafted into the ideal travel itinerary. This day-by-day itinerary presented to the user in an intuitive and informative React UI. 
 
-# Features:
+## Features:
 
 - Generates custom travel itineraries based on user budget, group size, and trip duration
 - Breaks down daily activities with cost-per-person estimates for transparent budgeting
